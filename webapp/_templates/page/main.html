@@ -1,0 +1,86 @@
+{% extends "base_panel.html" %}
+
+{% block title %}All Pages{% endblock %}
+
+{% block top_container %}
+  All Pages
+  <p class="pull-right">
+    {% if user.is_superuser or user.is_staff %}<a href="{% url "app:add_page" %}" class="btn btn-info btn-sm"> <i class="icon-plus"></i> <span> Add Page</span> </a>{% endif %}
+  </p>
+{% endblock %}
+
+{% block main_container %}
+  <form class="form-inline content-nav" role="form" name="projectPageForm">
+    <div class="form-group">
+      <label><strong>FILTER </strong></label>
+ 
+      <select class="input-sm form-control" onChange="projectPageForm.submit();" name="project">
+        <option value=""> [ All Projects ] </option>
+        {% for project_detail in all_projects %}
+          <option value="{{ project_detail.pk }}" {% ifequal project project_detail.pk %}selected{% endifequal %}>{{ project_detail.name }}: /{{ project_detail.slug }}/</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <div class="table-autoscroll">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Page Name</th>
+            <th>Slug</th>
+            <th>Status</th>
+            <th>Added By</th>
+            <th>Date Added</th>
+            <th>Last Modified</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% if pages|length %}
+          {% for page in pages %}
+            <tr>
+              <td><a href="{% url 'app:read_page' page.pk %}">{{ page.name }}</a></td>
+              <td>/{{ page.project.slug }}/{{ page.slug }}/</td>
+              <td>
+                  {% if page.live_mode %}
+                    <span class="label label-success">Live Mode</span>
+                  {% else %}
+                    <span class="label label-default">Test Mode</span>
+                  {% endif %}
+              </td>
+              <td>{{ page.added_by.username }}</td>
+              <td>{{ page.datetime_added }}</td>
+              <td>{{ page.last_modified }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan=6>No record</td>
+          </tr>
+        {% endif %}
+        </tbody>
+
+        <tfoot>
+          <tr>
+            <th colspan=5>Total Pages</th>
+            <th>{{ pages|length }}</th>
+          </tr>
+        </tfoot>
+
+      </table>
+  </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-pages').addClass('active');
+        });
+    </script>
+
+{% endblock %}

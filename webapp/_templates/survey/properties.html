@@ -1,0 +1,193 @@
+
+{% if survey %}
+  <div class="row">
+    <span class="title">Survey Details</span>
+    <a class="survey btn btn-info btn-xs pull-right" href="#"><i class="icon-pencil"></i> Edit Survey</a>
+    <p><span class="label label-default">TITLE: {{ survey.title|default:'No Survey Title'|truncatechars:20 }}</span>
+        <span class="label label-default">STATUS: {% if survey.active %}Enabled{% else %}Disabled{% endif %}</span>
+    </p>
+  </div>
+  <div id="survey-detail-{{ survey.pk }}" class="survey-detail"></div>
+
+  <div class="row">
+    <span class="title">Questions</span>
+    <a class="survey-question btn btn-info btn-xs pull-right" href="#"><i class="icon-plus"></i> Add Question</a>
+    <p><span class="label label-default">{{ survey.survey_questions.all|length|default:0 }} Question(s)</span></p>
+  </div>
+  <div id="question-detail-" class="survey-detail"></div>
+
+  {% for question in survey.survey_questions.all|dictsort:"id" %}
+    <div class="row">
+      <span><i class="icon-question"></i> {{ question.label|truncatechars:30 }}</span>
+      {% if question.active %}
+        <a href="#" class="question-switch pull-right" url="{% url 'app:survey_question_switch' survey.pk question.pk 0 %}"> Disable</a>
+      {% else %}
+        <a href="#" class="question-switch pull-right" url="{% url 'app:survey_question_switch' survey.pk question.pk 1 %}"> Enable</a>
+      {% endif %}
+      <span class="pull-right"> | </span>
+      <a id="{{ question.pk }}" class="survey-question pull-right" href="#">Edit</a>
+    </div>
+    <div id="question-detail-{{ question.pk }}" class="survey-detail"></div>
+  {% endfor %}
+
+{% else %}
+
+  <div class="row">
+    <span class="title">Survey Details</span>
+    <a class="survey btn btn-info btn-xs pull-right" href="#"><i class="icon-plus"></i> Add Survey</a>
+    <p><span class="label label-default">No Survey</span></p>
+  </div>
+  <div id="survey-detail-" class="survey-detail"></div>
+
+{% endif %}
+
+<script type="text/javascript">
+  $(function() {
+
+    $(".question-switch").on("click", function() {
+      $.ajax({
+          type: 'GET', url: $(this).attr("url"), dataType: 'html', data: null,
+          success: function(data) {
+            console.log(data);
+
+            objectId = "{{ object_code }}";
+
+            var objectProperties = getObjectProperties(objectId);
+            updateSurveyForm(objectProperties);
+            displaySurveyProperties(objectProperties);
+
+          }
+      });
+    });
+
+    $(".survey").on("click", function() {
+
+      url = '{% url "app:survey" %}' + "?id={{ survey.pk }}&object_id={{ page_object.pk }}"; 
+
+      $.ajax({
+          type: 'GET', url: url, dataType: 'html', data: null,
+          success: function(data) {
+            form_id = "surveyPropertiesForm-{{ survey.pk }}"
+            form_sel = "#" + form_id
+
+            objectCode = "{{ object_code }}";
+            $(".survey-properties div.survey-detail").empty();
+
+            $("#survey-properties-"+ objectCode +" #survey-detail-{{ survey.pk }}")
+              .empty()
+              .append(
+                  $('<form/>')
+                    .attr({
+                      "id": form_id,
+                      "class": "form-horizontal properties-form",
+                      "method": "POST",
+                      })
+                )
+
+            $(form_sel).append(data);
+            $(form_sel).submit(function() {
+              $.ajax({
+                type: 'post', url: url, dataType: 'json', data: $(this).serialize(),
+                success: function(data) {
+                  $(".survey-properties #survey-detail-{{ survey.pk }}")
+                    .empty()
+                    .append("Successfully updated survey")
+      
+                  var objectProperties = getObjectProperties(objectCode);
+                  objectProperties.survey.push(data.id);
+                  surveys = jQuery.unique( objectProperties.survey );
+                  console.log(objectProperties);
+
+                  updateObjectProperty(objectCode, "survey", surveys)
+                  var objectProperties = getObjectProperties(objectCode);
+                  updateSurveyForm(objectProperties);
+                  displaySurveyProperties(objectProperties);
+
+                },
+                error: function(jqXHR, textStatus, errorThrownerror) {
+                  if (jqXHR.status != 400) {
+                    alert('Failed request: ' + textStatus + ": Please refresh");
+                    $(form_sel).empty();
+                    return;
+                  }
+                  $(form_sel).html(jqXHR.responseText);
+                  $(form_sel + ' .cancel').click(function() {
+                      $(form_sel).empty();
+                  });
+                }
+              });
+              return false;
+           });
+
+           $(form_sel+" .cancel").on("click", function() {
+              $(".survey-properties div.survey-detail").empty();
+           });
+
+          }
+      });
+    });
+
+    $(".survey-question").on("click", function() {
+      questionId = this.id || "";
+      url = '{% url "app:survey_question" %}' + "?id=" + questionId + "&survey_id={{ survey.pk }}"; 
+
+      $.ajax({
+          type: 'GET', url: url, dataType: 'html', data: null,
+          success: function(data) {
+            form_id = "surveyQuestionForm-" + questionId;
+            form_sel = "#" + form_id;
+
+            objectId = "{{ object_code }}";
+            $(".survey-properties div.survey-detail").empty();
+            $("#survey-properties-"+ objectId +" #question-detail-" + questionId)
+              .empty()
+              .append(
+                  $('<form/>')
+                    .attr({
+                      "id": form_id,
+                      "class": "form-horizontal properties-form",
+                      "method": "POST",
+                      })
+                )
+
+            $(form_sel).append(data);
+            $(form_sel).submit(function() {
+              $.ajax({
+                type: 'post', url: url, dataType: 'json', data: $(this).serialize(),
+                success: function(data) {
+                  $(".survey-properties #question-detail-" + questionId)
+                    .empty()
+                    .append("Successfully updated question")
+
+                    var objectProperties = getObjectProperties(objectId);
+                    updateSurveyForm(objectProperties);
+                    displaySurveyProperties(objectProperties);
+
+                },
+                error: function(jqXHR, textStatus, errorThrownerror) {
+                  if (jqXHR.status != 400) {
+                    alert(jqXHR.responseText);
+                    alert('Failed request: ' + textStatus + ": Please refresh");
+                    $(form_sel).empty();
+                    return;
+                  }
+                  $(form_sel).html(jqXHR.responseText);
+                  $(form_sel + ' .cancel').click(function() {
+                      $(form_sel).empty();
+                  });
+                }
+              });
+              return false;
+            });
+
+            $(form_sel+" .cancel").on("click", function() {
+              $(".survey-properties div.survey-detail").empty();
+            });
+
+          }
+      });
+    });
+
+  });
+
+</script>

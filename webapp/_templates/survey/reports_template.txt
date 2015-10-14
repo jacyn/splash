@@ -1,0 +1,5 @@
+{% for sr in reports %}{{ sr.survey.title }} ({{ sr.date_revised|date:"M d Y h:i:s a" }})
+{% for value in sr.report.headers %}"{{ value }}", {% endfor %}
+{% for line in sr.report.data %}{% for value in line %}"{{ value|default:'-' }}",{% endfor %}
+{% endfor %}
+{% endfor %}

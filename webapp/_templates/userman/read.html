@@ -1,0 +1,97 @@
+{% extends "base_panel.html" %}
+
+{% block title %}Read User Account Details{% endblock %}
+
+{% block top_container %}
+  User Account Details of {{ user_detail.username }}
+  <p class="pull-right">
+    <a href="{% url "userman:edit" user_detail.pk %}" class="btn btn-info btn-sm"> <i class="icon-pencil"></i> <span> Edit User Account Details</span> </a>
+    {% if user_detail.is_active %}
+      <a href="{% url "userman:deactivate" user_detail.pk %}" class="btn btn-sm btn-danger"><i class="icon-ban"></i> Deactivate User Account</a>
+    {% else %}
+      <a href="{% url "userman:activate" user_detail.pk %}" class="btn btn-sm btn-success"><i class="icon-check"></i> Activate User Account</a>
+    {% endif %}
+
+  </p>
+{% endblock %}
+
+
+{% block main_container %}
+
+  <table class="table">
+    <tbody>
+      <tr>
+        <th>Username</th>
+        <td>{{ user_detail.username|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Password</th>
+        <td>
+          {% if not user_detail.has_usable_password %}No password set. {% endif %}
+
+          {% if user_detail.email %}
+          <form action="{% url 'password_reset' %}" method="POST">
+              {% csrf_token %}
+              <input type="hidden" value="{{ user_detail.email }}" name="email">
+              <button type="submit" class="btn btn-xs btn-info"><span>Reset password</span></button>
+          </form>
+          {% else %}
+          <div><span class="label label-default"> Email address is required to reset the password. </span></div>
+          {% endif %}
+
+        </td>
+      </tr>
+      <tr>
+        <th>First name</th>
+        <td>{{ user_detail.first_name|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Last name</th>
+        <td>{{ user_detail.last_name|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Email</th>
+        <td>{{ user_detail.email|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Account type</th>
+        <td>
+          {% if user_detail.is_staff %}
+            <span class="label label-primary">Administrator</span>
+          {% else %}
+            <span class="label label-default">Normal</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <td> 
+          {% if user_detail.is_active %}
+            <span class="label label-success">Active</span>
+          {% else %}
+            <span class="label label-danger">Deactivated</span>
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan=2>
+          <a href="{% url 'userman:main' %}" class="btn btn-sm btn-default">Back to All User Accounts</a>
+        </th>
+      </tr>
+    </tfoot>
+  </table>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-users').addClass('active');
+        });
+    </script>
+
+{% endblock %}

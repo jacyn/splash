@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block base_container %}
+
+{% if user.is_authenticated %}
+  <meta http-equiv="REFRESH" content="0;url={% url 'dashboard:main' %}">
+{% endif %}
+
+  <div class="login-page">
+    <div class="container">
+      <form action="{% url 'login' %}" method="post" class="form-login">
+
+        <h2 class="form-login-heading">sign in now</h2>
+
+        <div class="login-wrap">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <a class="close" data-dismiss="alert" href="#">×</a>
+                Invalid Login Credentials.
+            </div>
+        {% endif %}
+
+        <input id="id_username" name="username" type="text" class="form-control" placeholder="Username" autofocus {% if form.username.value %}value="{{ form.username.value }}"{% endif %}>
+        <br />
+        <input type="hidden" name="next" value="{{ next }}" />
+        <input id="id_password" name="password" type="password" class="form-control" placeholder="Password" value="">
+
+        <h6 class="pull-right">
+          <a data-toggle="modal" href="{% url 'password_reset' %}"> Forgot Password?</a>
+        </h6>
+        <button class="btn btn-theme btn-block" type="submit"><i class="icon-login"></i> SIGN IN</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+{% endblock %}

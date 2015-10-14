@@ -1,0 +1,180 @@
+import sys
+import simplejson as json
+
+from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect, Http404, QueryDict, HttpResponse
+from django.template import RequestContext, loader as template_loader
+from django.shortcuts import render, render_to_response
+from django.middleware.csrf import get_token
+
+from easy_thumbnails.files import get_thumbnailer
+from filer.models import Image, File
+
+from layout import forms as layout_forms
+from layout import models as layout_models
+
+
+
+def main(request, template_name="layout/main.html"):
+    context = RequestContext(request)
+
+    http_response = render_to_response(
+        template_name, 
+        {
+        },
+        context_instance=context,
+    )
+    return http_response
+
+
+def redirect_to_main(request):
+    return HttpResponseRedirect(reverse('layout:main'))
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def _iterencode(self, o, markers=None):
+        if isinstance(o, decimal.Decimal):
+            return (str(o) for o in [o])
+        return super(DecimalEncoder, self)._iterencode(o, markers)
+
+def objects(request):
+
+    layout_objects = dict()
+
+    for obj in layout_models.ObjectProperties.objects.all().order_by('sequence'):
+       object_properties = dict()
+       object_properties["sequence"] = obj.sequence
+       object_properties["code"] = obj.code
+       object_properties["name"] = obj.name
+       object_properties["x"] = obj.x
+       object_properties["y"] = obj.y
+       object_properties["width"] = obj.width
+       object_properties["height"] = obj.height
+
+       background_image = None
+       background_image_url = None
+       if obj.background_image and obj.background_image.url:
+           options = {"size": (obj.background_image.width, obj.background_image.height), "crop": True}
+           background_image_url = get_thumbnailer(obj.background_image).get_thumbnail(options).url
+           background_image = obj.background_image.original_filename
+
+       object_properties["background_image"] = background_image
+       object_properties["background_image_url"] = background_image_url
+
+       layout_objects[obj.sequence] = object_properties
+    #print >> sys.stderr, "%s" % layout_objects
+    #print >> sys.stderr, "%s" % json.dumps(layout_objects, sort_keys=False)
+    return HttpResponse(json.dumps(layout_objects), content_type="application/json")
+
+def image_url(request, original_filename):
+    try:
+        image = File.objects.get(original_filename=original_filename)
+    except File.DoesNotExist, e:
+        image = None
+
+    background_image_url = None
+    print >> sys.stderr, "TEST: :%s" % image
+    if image is not None:
+        options = {"size": (image.width, image.height), "crop": True}
+        background_image_url = get_thumbnailer(image).get_thumbnail(options).url
+
+    j = json.dumps({"url": background_image_url})
+    return HttpResponse(j, content_type="application/json", status=200)
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+def properties(request, object_code, template_name="layout/form.html"):
+    context = RequestContext(request)
+
+    #if not request.is_ajax():
+    #    messages.error(request, 'This action requires javascript (ajax).')
+    #    return HttpResponseRedirect(reverse('bcast.views.view_project', args=[req_id]))
+
+    try:
+        properties = layout_models.ObjectProperties.objects.get(code=object_code)
+    except layout_models.ObjectProperties.DoesNotExist, dne:
+        properties = None
+        #j = json.dumps({})
+        #return HttpResponse(j, content_type="application/json", status=200)
+
+    #form = layout_forms.ObjectPropertiesForm(properties=properties)
+
+    #print >> sys.stderr, "MAIN: %s" % object_code
+    if request.method == "POST":
+        data = request.POST.copy()
+        print >> sys.stderr, "POST: %s" % data
+
+        try:
+            image = File.objects.get(original_filename=data["background_image"])
+        except File.DoesNotExist, e:
+            image = None
+        data["background_image"] = image
+ 
+        form = layout_forms.ObjectPropertiesForm(data=data)
+        if form.is_valid():
+            print >> sys.stderr, "POST-VALID: %s" % form.cleaned_data
+            if properties:
+                # existing
+                properties.name = form.cleaned_data.get('name')
+                properties.background_image = form.cleaned_data.get('background_image')
+                properties.x = form.cleaned_data.get('x')
+                properties.y = form.cleaned_data.get('y')
+                properties.width = form.cleaned_data.get('width')
+                properties.height = form.cleaned_data.get('height')
+
+                properties.save()
+            else:
+                # new object
+                properties = layout_models.ObjectProperties.objects.create(**form.cleaned_data)
+
+            messages.success(request, 'Saved "Object Properties" code "%s"' % properties.code)
+            j = json.dumps({})
+            return HttpResponse(j, content_type="application/json", status=200)
+
+        else:
+            print >> sys.stderr, "POST-INVALID: %s" % object_code
+            csrf_token_value = get_token(request)
+            context.update({
+                'form': form,
+                'csrf_token_value': csrf_token_value,
+            });
+            fragment = template_loader.render_to_string(template_name, context)
+            return HttpResponse(fragment, content_type="text/html", status=400)
+    else: # non-POST
+
+        data = request.GET.copy()
+        print >> sys.stderr, "NONPOST-INVALID: %s" % data
+
+        if properties and properties.background_image:
+            options = {"size": (properties.background_image.width, properties.background_image.height), "crop": True}
+            background_image_url = get_thumbnailer(properties.background_image).get_thumbnail(options).url
+            data["background_image"] = properties.background_image
+        else:
+            data["background_image"] = None
+
+        form = layout_forms.ObjectPropertiesForm(data=data)
+        
+        csrf_token_value = get_token(request)
+        context.update({
+            'form': form,
+            'csrf_token_value': csrf_token_value,
+        });
+        fragment = template_loader.render_to_string(template_name, context)
+        return HttpResponse(fragment, content_type="text/html", status=200)
+
+
+def preview(request, template_name="layout/preview.html"):
+    context = RequestContext(request)
+
+    http_response = render_to_response(
+        template_name, 
+        {
+        },
+        context_instance=context,
+    )
+    return http_response
+

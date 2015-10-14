@@ -1,0 +1,367 @@
+{% load crispy_forms_tags %}
+
+{% if survey_form %}
+  <div style="padding-top: 20px;"></div>
+  {% crispy survey_form %}
+{% else %}
+  {% if survey %}
+    <h4>{{ survey.title|default:'No Title set' }}</h4>
+    {% if survey.submission_type == 1 %}
+      {% if form %}
+        {% csrf_token %}
+        {% crispy form %}
+      {% else %}
+        {% for question in questions %}
+          {{ question.content|safe }} 
+        {% empty %}
+          <div class="question-tab">No question</div>
+        {% endfor %}
+        <button class="btn btn-primary btn-sm">Submit</button>
+      {% endif %}
+    {% elif survey.submission_type == 2 %}
+      <div class="row">
+        <div class="col-sm-7 col-md-4 col-lg-4">
+          <a class="btn btn-block btn-social btn-facebook" href="#"><span class="fa fa-facebook"></span> Sign in with Facebook</a>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    {{ survey.thanks|safe }}
+  {% endif %}
+{% endif %}
+<input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token_value }}'/>
+
+<script>
+
+function updateQuestionDesign(objectId, questionExists, questionProperties) {
+  surveyFormId = "#surveyDesignForm-" + objectId
+
+  url = "/app/question/form/validate/"
+  var form_id = surveyFormId + " .form-question-tab"
+
+  data = JSON.stringify(questionProperties);
+
+  var objectProperties = getObjectProperties(objectId);
+  var allQuestions = JSON.stringify(objectProperties.form.questions);
+  $.ajax({
+    type: 'POST', url: url, dataType: "html", data: { data: data, questions: allQuestions },
+    success: function(data) {
+
+      questionDisplayed = $("#" + objectId + " .question-list #" + questionProperties.slug).length
+      if (questionDisplayed) {
+        $("#" + objectId + " .question-list #" + questionProperties.slug)
+          .replaceWith(data);
+      }
+      else {
+        $("#" + objectId + " .question-list")
+          .append(data);
+      }
+
+      updateSmsNotifRecipientSel(objectId)
+
+      $(form_id)
+        .remove()
+
+      return;
+    },
+    error: function(jqXHR, textStatus, errorThrownerror) {
+      if (jqXHR.status != 400) {
+        alert('Failed request: ' + textStatus + ": Please refresh");
+        $(form_id).empty();
+        return;
+      }
+
+      $(form_id).html(jqXHR.responseText);
+
+      $(form_id + " .save").click(function() {
+
+        var objectProperties = getObjectProperties(objectId);
+        current_form_sel = "#" + objectProperties.code + " .form-question-tab"
+
+        submitQuestionForm(objectProperties, questionProperties, current_form_sel);
+      });
+
+      $(form_id + ' .cancel').click(function() {
+        $(form_id).remove();
+      });
+
+      return;
+    }
+
+  });
+
+  return false;
+
+}
+
+function updateSurvey(objectProperties, name, value) {
+  objectProperties.form[name] = value
+  localStorage.setItem(objectProperties.code, JSON.stringify(objectProperties));
+}
+
+function updateQuestion(objectProperties, questionSlug, questionProperties) {
+  questionExists = false
+  $.each(objectProperties.form.questions, function(k, question) {
+    if (question.slug == questionSlug) {
+      questionExists = true
+      question = questionProperties
+      objectProperties.form.questions[k] = questionProperties;
+  
+      return false;
+    }
+  });
+
+  if (questionExists) {
+    console.log("edited", questionProperties);
+  }
+  else {
+    console.log("added", questionProperties);
+    objectProperties.form.questions.push(questionProperties);
+  }
+
+  localStorage.setItem(objectProperties.code, JSON.stringify(objectProperties));
+  updateQuestionDesign(objectProperties.code, questionExists, questionProperties)
+}
+
+function removeQuestion(objectProperties, questionSlug) {
+
+  questionExists = false
+  $.each(objectProperties.form.questions, function(k, question) {
+    if (question.slug == questionSlug) {
+      question.active = false
+      questionExists = true
+      return false;
+    }
+  });
+
+  if (questionExists) {
+    localStorage.setItem(objectProperties.code, JSON.stringify(objectProperties));
+
+    $("#" + objectProperties.code + " .question-list #" + questionSlug)
+      .remove()
+
+    updateSmsNotifRecipientSel(objectProperties.code)
+  }
+
+}
+
+function getQuestionProperties(objectId, questionSlug) {
+
+  var questionProperties;
+  var objectProperties = getObjectProperties(objectId);
+
+  $.each(objectProperties.form.questions, function(k, question) {
+    if (question.slug == questionSlug) {
+      questionProperties = question
+      return false;
+    }
+  });
+
+  return questionProperties;
+}
+
+function submitQuestionForm(objectProperties, questionProperties, form_sel) {
+
+  $.each($(form_sel).serializeArray(), function(i, question) {
+    questionProperties[question.name] = question.value;
+  });
+
+  updateQuestion(objectProperties, questionProperties.slug, questionProperties);
+
+}
+
+function displayQuestionForm(objectProperties, questionProperties) {
+ 
+  objectId = objectProperties.code
+  surveyFormId = "#surveyDesignForm-" + objectId
+  form_sel = "#" + objectId + " .form-question-tab"
+
+  var data = JSON.stringify(questionProperties);
+  var allQuestions = JSON.stringify(objectProperties.form.questions);
+      
+  url = "/app/question/form/"
+  $.ajax({
+    type: 'POST', url: url, dataType: "html", data: { data: data, questions: allQuestions },
+    success: function(data) {
+      $(form_sel)
+        .addClass("question-form")
+        .html(data);
+
+      $(form_sel + " .save").on("click", function() {
+        current_form_sel = "#" + objectProperties.code + " .form-question-tab"
+        submitQuestionForm(objectProperties, questionProperties, current_form_sel);
+
+      });
+
+      $(form_sel + ' .cancel').click(function() {
+        current_form_sel = "#" + objectProperties.code + " .form-question-tab"
+        $(current_form_sel).remove();
+      });
+
+      return;
+       
+    },
+    error: function(jqXHR, textStatus, errorThrownerror) {
+      if (jqXHR.status != 400) {
+        alert('Failed request: ' + textStatus + ": Please refresh");
+        $(form_sel).empty();
+        return;
+      }
+
+      $(form_sel).html(jqXHR.responseText);
+      $(form_sel + ' .cancel').click(function() {
+          $(form_sel).remove();
+      });
+    }
+
+  });
+
+  return false;
+}
+
+function removeQuestionTab(objectId) {
+  $("#" + objectId +" .form-question-tab").remove()
+}
+
+function updateSmsNotifRecipientSel(objectId) {
+
+  selId = "#surveyDesignForm-" + objectId +" #id_sms_notification_recipient"
+  var objectProperties = getObjectProperties(objectId);
+
+  $(selId).empty()
+
+  $(selId).append(
+    $('<option>', {value:0, text:'None', selected: 'selected'})
+  );
+  $.each(objectProperties.form.questions, function(key, question) {
+    if (question.active) {
+      if (question.field_type == 16) {
+        option_params = {value: question.slug, text: question.label}
+
+        if (objectProperties.form.sms_notification_recipient == question.slug) {
+          option_params['selected'] = 'selected';
+        }
+        $(selId).append(
+          $('<option>', option_params)
+        );
+      }
+    }
+  });
+}
+
+$(function() {
+
+  $("select").select2();
+
+  updateSmsNotifRecipientSel("{{ object_code }}")
+ 
+  $("#surveyDesignForm-{{ object_code }}").on("change", ".form-text-field", function() {
+
+    objectId = "{{ object_code }}"
+
+    name = this.name
+    value = this.value
+
+    if (this.type == 'checkbox') {
+      value = this.checked
+    }
+
+    var objectProperties = getObjectProperties(objectId)
+    updateSurvey(objectProperties, name, value)
+
+  });
+
+  $("#surveyDesignForm-{{ object_code }}").on("change", ".submission_type", function() {
+    submission_type = this.value;
+    objectId = "{{ object_code }}"
+    var objectProperties = getObjectProperties(objectId)
+    objectProperties.form.submission_type = parseInt(this.value);
+    updateObjectProperty(objectId, "form", objectProperties.form)
+    objectProperties = getObjectProperties(objectId)
+
+    layoutEditMode = 1
+    getSurveyForm(objectProperties, layoutEditMode);
+  });
+
+  $("#surveyDesignForm-{{ object_code }}").on("click", ".delete-question", function() {
+
+    questionSlug = $(this).attr("data-key")
+    surveyFormId = "#surveyDesignForm-{{ object_code }}"
+    objectId = "{{ object_code }}"
+
+    var objectProperties = getObjectProperties(objectId)
+    questionProperties = getQuestionProperties(objectId, questionSlug)
+
+    removeQuestionTab(objectId);
+    removeQuestion(objectProperties, questionSlug)
+    return false;
+
+  });
+
+  $("#surveyDesignForm-{{ object_code }}").on("click", ".edit-question", function() {
+
+    questionSlug = $(this).attr("data-key")
+    surveyFormId = "#surveyDesignForm-{{ object_code }}"
+    objectId = "{{ object_code }}"
+
+    var objectProperties = getObjectProperties(objectId)
+    questionProperties = getQuestionProperties(objectId, questionSlug)
+
+    removeQuestionTab(objectId);
+    $("#" + objectId + " .question-list #" + questionProperties.slug)
+      .after(
+        $('<form />')
+          .addClass("form-question-tab")
+        )
+
+    displayQuestionForm(objectProperties, questionProperties);
+
+    return false;
+
+  });
+
+  $("#surveyDesignForm-{{ object_code }}").on("click", ".add-question", function() {
+      // display form
+
+      surveyFormId = "#surveyDesignForm-{{ object_code }}"
+      objectId = "{{ object_code }}"
+
+      var objectProperties = getObjectProperties(objectId)
+      lastQuestionIndex = objectProperties.form.questions.length || 0;
+      if (lastQuestionIndex) { lastQuestionIndex--; }
+
+      nxtQuesCount = 0
+      if (objectProperties.form.questions[lastQuestionIndex]) {
+        lastQuestion = objectProperties.form.questions[lastQuestionIndex].slug;
+        nxtQuesCount = lastQuestion.replace('fld_', '');
+      }
+      nxtQuesCount++
+      questionSlug = "fld_" + nxtQuesCount;
+
+      questionProperties = {
+          "slug": questionSlug,
+          "label": "",
+          "field_type": 0,
+          "initial": "",
+          "choices": "",
+          "required": "",
+          "help_text": "",
+          "placeholder_text": "",
+          "default": "",
+          "active": true,
+      }
+
+      removeQuestionTab(objectId);
+      $("#" + objectId + " .add-question")
+        .after(
+          $('<form />')
+            .addClass("form-question-tab")
+          )
+
+      displayQuestionForm(objectProperties, questionProperties);
+
+      return false;
+  });
+});
+</script>
+

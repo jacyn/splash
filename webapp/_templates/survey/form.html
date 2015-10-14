@@ -1,0 +1,16 @@
+{% load crispy_forms_tags %}
+
+{% if form %}
+  {% if form.errors %}
+      <div class="alert alert-danger">
+          <a class="close" data-dismiss="alert" href="#">×</a>
+          There are errors in the form submitted (see below). Please try again.
+      </div>
+  {% endif %}
+
+  {% csrf_token %}
+  {% crispy form %}
+{% else %}
+  {{ survey.thanks|safe }}
+{% endif %}
+

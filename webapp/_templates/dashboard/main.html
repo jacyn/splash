@@ -1,0 +1,99 @@
+{% extends "base_panel.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sub_container %}
+  <section class="wrapper site-min-height">
+
+      <div class="row mt">
+          <div class="well">
+            <center><h2>Welcome <strong>{% if user.last_name or user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}@{{ user.username }}{% endif %}</strong>!</h2></center>
+          </div>
+
+          <div class="col-md-4 col-sm-4 mb">
+              <div class="grey-panel pn donut-chart">
+                  <div class="grey-header">
+                      <h5><strong>NO. OF PROJECTS</strong></h5>
+                  </div>
+                  <center>
+                      <div style="width: 120px; height: 100px; font-size: 6em; color: #FF6B6B; font-weight: 900">
+                          {{ summary.projects.all }}
+                      </div>
+                      <span>Last modified: <br>{{ summary.projects.last_data.last_modified }}</span>
+                  </center>
+                  <div class="row">
+                      <div class="col-sm-6 col-xs-6 goleft">
+                          <p>Published: {{ summary.projects.published }} </p>
+                      </div>
+                       <div class="col-sm-6 col-xs-6">
+                          <p>Unpublished: {{ summary.projects.unpublished }}</p>
+                       </div>
+                  </div>
+              </div><!-- --/grey-panel ---->
+          </div><!-- /col-md-4-->
+          
+          <div class="col-md-4 col-sm-4 mb">
+              <div class="darkblue-panel pn">
+                  <div class="darkblue-header">
+                      <h5><strong>NO. OF PAGES</strong></h5>
+                  </div>
+                  <center>
+                      <div style="width: 120px; height: 100px; font-size: 6em; color: white; font-weight: 900">
+                          {{ summary.pages.all }}
+                      </div>
+                  </center>
+                  <p>Last modified: <br>{{ summary.pages.last_data.last_modified }}</p>
+                  <footer>
+                      <div class="pull-left">
+                          <h5>Published: {{ summary.pages.published }} </h5>
+                      </div>
+                      <div class="pull-right">
+                          <h5>Unpublished: {{ summary.pages.unpublished }}</h5>
+                      </div>
+                  </footer>
+              </div><!-- -- /darkblue panel ---->
+          </div><!-- /col-md-4 -->
+          
+          <div class="col-md-4 col-sm-4 mb">
+              <!-- NO OF SURVEYS PANEL -->
+              <div class="green-panel pn">
+                  <div class="green-header">
+                      <h5><b>NO. OF SURVEYS</b></h5>
+                  </div>
+                  <div class="sparkline">
+                      <center>
+                          <div style="width: 120px; height: 100px; vertical-align: top; font-size: 6em; color: white; font-weight: 900">
+                              {{ summary.surveys.all }}
+                          </div>
+                      </center>
+                      <p>Last modified: <br>{{ summary.surveys.last_data.last_modified }}</p>
+                  </div>
+
+                  <div class="mt">
+                    <b>
+                      <div class="col-sm-6 col-xs-6 goleft">
+                          <p>Published: {{ summary.surveys.published }} </p>
+                      </div>
+                       <div class="col-sm-6 col-xs-6">
+                          <p>Unpublished: {{ summary.surveys.unpublished }}</p>
+                       </div>
+                     </b>
+                  </div>
+              </div>
+          </div><!-- /col-md-4 -->
+
+      </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-dashboard').addClass('active');
+        });
+    </script>
+
+{% endblock %}

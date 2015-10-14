@@ -1,0 +1,394 @@
+import sys
+import simplejson as json
+
+from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect, Http404, QueryDict, HttpResponse
+from django.template import RequestContext, loader as template_loader
+from django.shortcuts import render, render_to_response
+from django.middleware.csrf import get_token
+from django.core.serializers.json import DjangoJSONEncoder
+from django.views.decorators.csrf import csrf_exempt
+
+from easy_thumbnails.files import get_thumbnailer
+from filer.models import File
+
+from app import forms as app_forms
+from app import models as app_models
+import app.views.survey as app_survey_views
+
+
+@login_required
+def main(request, page_id=None, template_name="layout/main.html"):
+    context = RequestContext(request)
+
+    page = None
+    if page_id:
+        page = app_models.Page.objects.get(pk=page_id)
+
+    object_last_sequence = 1
+    try:
+        last_object = page.page_objects.latest('sequence').code
+        object_last_sequence = int(last_object.replace("object-", ""))
+    except app_models.Object.DoesNotExist:
+        object_last_sequence = 1
+  
+    http_response = render_to_response(
+        template_name, 
+        {
+            'page': page,
+            'object_last_sequence': object_last_sequence,
+        },
+        context_instance=context,
+    )
+    return http_response
+
+
+def redirect_to_main(request, page_id=None):
+    if page_id:
+        return HttpResponseRedirect(reverse('app:layout_main', args=[page_id]))
+    
+    return HttpResponseRedirect(reverse('app:pages'))
+
+
+def objects(request):
+
+    page_id = request.GET.get("page_id", None)
+    if not request.is_ajax():
+        messages.error(request, 'This action requires javascript (ajax).')
+        return redirect_to_main(request)
+
+    layout_objects = [ obj.as_dict() for obj in app_models.Object.objects.filter(active=True, page__pk=page_id).order_by('sequence') ]
+    return HttpResponse(json.dumps(layout_objects), content_type="application/json")
+
+
+def object_image(request):
+
+    if not request.is_ajax():
+        messages.error(request, 'This action requires javascript (ajax).')
+        return redirect_to_main(request)
+
+    filename = request.GET.get("filename", None)
+
+    image=None
+    try:
+        image = File.objects.filter(original_filename=filename).order_by("-uploaded_at")[:1].get()
+    except File.DoesNotExist, e:
+        image = None
+
+    url = None
+    if image is not None:
+       options = {"size": (image.width, image.height), "crop": True}
+       url = get_thumbnailer(image).get_thumbnail(options).url
+
+    j = json.dumps({"url": url})
+    return HttpResponse(j, content_type="application/json", status=200)
+
+
+@login_required
+def validate(request, post_data):
+    errors = []
+    status = dict()
+
+    if post_data is None:
+        status.update({
+            "valid": False,
+            "error": [ "Invalid data" ],
+        })
+        return status
+
+    has_normal_form = False
+    has_facebook_form = False
+    validated_data = dict()
+    for key in post_data.keys():
+        data = post_data[key]
+
+        background_image = data.get("background_image", None)
+        if background_image:
+            image = None
+            try:
+                image = File.objects.filter(original_filename=background_image).latest('uploaded_at')
+            except File.DoesNotExist, e:
+                image = None
+            data.update({"background_image": image})
+
+        page = None
+        page_object = None
+        try:
+            page = app_models.Page.objects.get(pk=data["page"])
+            page_object = page.page_objects.get(code=data.get("code"))
+        except app_models.Page.DoesNotExist, dne:
+            object_name = data.get("code")
+            status.update({
+                "valid": False,
+                "object": object_name,
+                "error": [ "Page not found" ],
+            })  
+
+            return status
+        except app_models.Object.DoesNotExist, dne:
+            page_object = None
+
+        page_object_form = app_forms.ObjectPropertiesForm(data=data)
+        if page_object_form.is_valid():
+            if page_object:
+                # existing page object
+                page_object_form.update_model_instance(page_object)
+            else:
+                # new page object
+                if page_object_form.cleaned_data.get('active'):
+                    page_object = page_object_form.get_new_model(page=page)
+
+            survey = None
+            if page_object_form.cleaned_data.get('active'):
+                if page_object.object_type == app_forms.OBJECT_TYPE.SURVEY:
+
+                    survey_form = data.get("form")
+                    submission_type = survey_form.get("submission_type")
+                    if (submission_type == app_forms.SUBMISSION_TYPE.NORMAL) and has_normal_form:
+                        status.update({
+                            "valid": False,
+                            "object": page_object.name,
+                            "error": [ "At least one of Survey Form" ],
+                        })
+                        return status
+
+                    if (submission_type == app_forms.SUBMISSION_TYPE.FACEBOOK) and has_facebook_form:
+                        status.update({
+                            "valid": False,
+                            "object": page_object.name,
+                            "error": [ "At least one of Facebook Form" ],
+                        })
+                        return status
+
+                    survey_id = int(survey_form.get("id"))
+                    survey = app_survey_views.validate(survey_id, page_object, survey_form)
+                    if not survey.get("valid"):
+                        status.update({
+                            "valid": False,
+                            "object": page_object.name,
+                            "error": survey.get("error"),
+                        })  
+
+                        return status
+
+                    if submission_type == app_forms.SUBMISSION_TYPE.NORMAL:
+                        has_normal_form = True
+                    if submission_type == app_forms.SUBMISSION_TYPE.FACEBOOK:
+                        has_facebook_form = True
+
+            validated_data.update({
+                key: {
+                    'page_object': page_object,
+                    'form': survey
+                }
+            })
+
+        else:
+            form_errors = json.loads(page_object_form.errors.as_json())
+            errors = [ ]
+
+            for fld in form_errors:
+                error_message = ""
+                for err in form_errors[fld]:
+                    error_message += " %s " % err.get("message")
+
+                errors.append(u"%s. %s" % (fld.title(), error_message))
+
+            object_name = data.get("code")
+            if page_object:
+                object_name = page_object.name
+            
+            status.update({
+                "valid": False,
+                "object": object_name,
+                "error": errors,
+            })
+
+            return status
+
+    status.update({
+        "valid": True,
+        "error": None,
+        "data": validated_data,
+    })
+
+    return status
+
+
+@csrf_exempt
+@login_required
+def save(request):
+
+    if not request.is_ajax():
+        messages.error(request, 'This action requires javascript (ajax).')
+        return redirect_to_main(request)
+
+    if request.method == "POST":
+        post_data = json.loads(request.POST.copy()['data'])
+        page_objects = validate(request, post_data)
+
+        if page_objects.get("valid") == False:
+            j = json.dumps(page_objects)
+            return HttpResponse(j, content_type="application/json", status=400)
+
+        all_surveys = dict()
+        all_data = page_objects.get("data")
+        for key in all_data:
+            data = all_data.get(key)
+            page_object = data.get("page_object")
+            form = data.get("form")
+
+            if page_object is not None:
+                page_object.save()
+
+                if (page_object.object_type == app_forms.OBJECT_TYPE.SURVEY) and form:
+                    form_data = form.get("data")
+                    survey = form_data.get("survey")
+                    survey.page_object = page_object
+                    if not page_object.active:
+                        survey.active = False
+                    survey.save()
+
+                    revision = form_data.get("revision")
+                    if revision is not None:
+                        revision.survey = survey
+                        revision.save()
+                        
+                        if int(survey.submission_type) == app_forms.SUBMISSION_TYPE.NORMAL:
+                            app_survey_views.save_questions(survey, form_data.get("questions"))
+
+                    all_surveys.update({ key: survey.pk })
+
+        j = json.dumps({
+            "valid": True,
+            "surveys": all_surveys,
+        })
+
+        return HttpResponse(j, content_type="application/json", status=200)
+
+
+@csrf_exempt
+@login_required
+def object_properties(request, template_name="layout/form.html"):
+    context = RequestContext(request)
+
+    if not request.is_ajax():
+        messages.error(request, 'This action requires javascript (ajax).')
+        return redirect_to_main(request)
+
+    data = request.POST.copy()
+
+    image = None
+    if data["background_image"]:
+        image = None
+        try:
+            image = File.objects.filter(original_filename=data["background_image"]).order_by("-uploaded_at")[:1].get()
+        except File.DoesNotExist, e:
+            image = None
+    data["background_image"] = image
+
+    form = app_forms.ObjectPropertiesForm(data=data)
+    context.update({
+        'form': form,
+    });
+
+    fragment = template_loader.render_to_string(template_name, context)
+    return HttpResponse(fragment, content_type="text/html", status=200)
+
+
+@login_required
+def preview(request, template_name="layout/preview.html"):
+    context = RequestContext(request)
+
+    http_response = render_to_response(
+        template_name, 
+        {
+        },
+        context_instance=context,
+    )
+    return http_response
+
+
+from app.logger import AppLogger
+from datetime import datetime
+def logged(page=None, success=0, **extra):
+
+    page_id = None
+    project_id = None
+    if page:
+        project_id = page.project.pk
+        page_id = page.pk
+
+    app_logger = AppLogger(log_enabled=True, log_ext=".splashsite.visits", 
+                debug_log_enabled=True, debug_log_ext=".splashsite.visits.debug")
+
+    now = datetime.now().replace(microsecond=0)
+    log_timestamp = now.isoformat()
+
+    log_fields = dict(
+        log_timestamp=log_timestamp,
+        project_slug=extra.get('project_slug', None),
+        page_slug=extra.get('page_slug', None),
+        project_id=project_id,
+        page_id=page_id,
+        success=success,
+        path_info=extra.get('path_info', None),
+        user_agent=extra.get('user_agent', None)
+        )
+
+    log_info = u"\t".join(str(k) + ":" + str(v) for k, v in log_fields.iteritems()) + "\n"
+    app_logger.log(log_info)
+
+    return True
+
+
+def view(request, project_slug=None, page_slug=None, template_name="layout/view.html"):
+    context = RequestContext(request)
+
+    user_agent = request.META.get('HTTP_USER_AGENT')
+    path_info = request.META.get('PATH_INFO')
+
+    if (project_slug is None) and (page_slug is None):
+        # log empty slugs
+        extra = dict(
+            project_slug=None,
+            page_slug=None,
+            user_agent=user_agent,
+            path_info=path_info,
+        )
+        logged(success=0, **extra)
+        raise Http404()
+
+    page = None
+    try:
+        page = app_models.Page.objects.get(slug=page_slug, project__slug=project_slug, live_mode=True)
+        extra = dict(
+            project_slug=project_slug,
+            page_slug=page_slug,
+            user_agent=user_agent,
+            path_info=path_info,
+        )
+        logged(page=page, success=1, **extra)
+    except app_models.Page.DoesNotExist, dne:
+        extra = dict(
+            project_slug=project_slug,
+            page_slug=page_slug,
+            user_agent=user_agent,
+            path_info=path_info,
+        )
+        logged(page=page, success=0, **extra)
+        raise Http404()
+
+    http_response = render_to_response(
+        template_name, 
+        {
+            "page": page,
+        },
+        context_instance=context,
+    )
+    return http_response
+
+

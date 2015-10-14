@@ -1,0 +1,6 @@
+*.pyc
+*.sw[op]
+*.priv
+*.pub
+venv/
+tmp/

@@ -1,0 +1,131 @@
+{% extends "base_panel.html" %}
+
+{% block title %}Customize Page Layout{% endblock %}
+
+{% block extracss %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}flat_mobile_devices/devices.min.css" type="text/css">
+{% endblock %}
+
+{% block top_container %}
+  <div class="btn-group">
+    <button id="design-layout-button" class="btn btn-default active hidden-phone"><i class="icon-wrench"></i> Design</button>
+    <button id="preview-layout-button" class="btn btn-default hidden-phone"><i class="icon-eye"></i> Preview</button>
+  </div>
+
+  Page Layout of /{{ page.project.slug }}/{{ page.slug }}/
+  <p class="pull-right">
+
+    <button id="save-layout" class="btn btn-theme btn-sm hidden-phone"> <i class="icon-control-play"></i> Save Page Layout</button>
+    <!--- <button id="preview-layout" class="btn btn-info btn-sm hidden-phone" onclick="window.open('{% url "app:layout_preview" %}')"><i class="icon-eye"></i> Preview Page Layout</button> -->
+    <a href="{% url 'app:read_page' page.pk %}" class="btn btn-default btn-sm"> Back to Page Details</a>
+  </p>
+{% endblock %}
+
+{% block main_container %}
+<div class="hidden-phone">
+
+  <div id="layout-result" style="margin: 10px; display: none;">
+      <a class="close" onclick='$("#layout-result").hide();' href="#">×</a>
+      <p></p>
+  </div>
+
+  <div class="chat-room">
+      <aside class="mid-side">
+          <div class="room-desk">
+              <div>
+                  <button id="add-survey-object" class="btn btn-primary btn-sm"><i class="icon-plus"></i> Add Form</button>
+                  <button id="add-object" class="btn btn-primary btn-sm"><i class="icon-plus"></i> Add Object</button>
+                  <button id="reset-layout" class="btn btn-danger btn-sm"><i class="icon-action-undo"></i> Reset Layout</button>
+              </div>
+              <div class="layout">
+              </div>
+          </div>
+      </aside>
+      <aside class="right-side properties">
+          <header>Layout Properties</header>
+          <div class="object-properties panel panel-info"></div>
+      </aside>
+  </div>
+
+  <div id="preview">
+    <div class="marvel-device iphone6 silver">
+        <div class="top-bar"></div>
+        <div class="sleep"></div>
+        <div class="volume"></div>
+        <div class="camera"></div>
+        <div class="sensor"></div>
+        <div class="speaker"></div>
+        <iframe class="screen" style="z-index: 3"></iframe> 
+        <div class="home"></div>
+        <div class="bottom-bar"></div>
+    </div>
+  </div>
+
+</div>
+<div class="hidden-lg hidden-md hidden-sm"><p>You are not allowed to customize layout here</p></div>
+
+{% endblock %}
+
+{% block extrajs %}
+
+  {{ block.super }}
+
+  <script src="{{ STATIC_URL }}flat_mobile_devices/main.min.js" type="text/javascript"></script>
+  <script src="{{ STATIC_URL }}webapp/js/layout.v1.1.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    $(function() {
+
+      $('#sidebar-menu-item-pages').addClass('active');
+
+      $('#preview').hide();
+      $('#preview-layout-button').on('click', function () {
+          $('.chat-room').hide();
+          $('#design-layout-button').removeClass("active");
+          $(this).addClass("active");
+
+          $('#preview .screen').attr('src', '{% url "app:layout_preview" %}');
+          $('#preview').show();
+      });
+
+      $('#design-layout-button').on('click', function () {
+          $('#preview').hide();
+          $('#preview-layout-button').removeClass("active");
+          $(this).addClass("active");
+
+          $('.chat-room').show();
+      });
+
+      $(window).bind('beforeunload', function(){
+          deleteSurvey();
+          return 'Please make sure you save this layout before you leave';
+      });
+
+      $("#reset-layout").on("click", function(){
+        localStorage.clear();
+        location.reload();
+      });
+
+      currentPageId = "{{ page.pk }}";
+      if (localStorage.getItem("page-layout-id") != currentPageId) {
+        localStorage.clear();
+      }
+
+      localStorage.setItem("page-layout-id", '{{ page.pk }}')
+      localStorage.setItem("object-last-sequence", '{{ object_last_sequence }}');
+
+      localStorage.setItem("object-properties-url", '{% url "app:object_properties" %}')
+      localStorage.setItem("object-image-url", '{% url "app:object_image" %}')
+      localStorage.setItem("layout-objects-url", '{% url "app:layout_objects" %}')
+      localStorage.setItem("layout-save-url", '{% url "app:save_layout" %}')
+      localStorage.setItem("survey-properties-url", '{% url "app:survey_properties" %}')
+      localStorage.setItem("survey-preview-url", '{% url "app:survey_preview" %}')
+      localStorage.setItem("survey-handler-url", '{% url "app:survey_handler" %}')
+      localStorage.setItem("survey-test-enabled", '1')
+      localStorage.setItem("survey-manage-url", '{% url "app:survey" %}')
+
+      loadLayoutObjects();
+
+    });
+  </script>
+
+{% endblock %}

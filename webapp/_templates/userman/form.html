@@ -1,0 +1,81 @@
+{% extends "base_panel.html" %}
+
+{% block title %}{% if user_detail %}Edit{% else %}Add{% endif %} User Account Details{% endblock %}
+
+{% block top_container %}
+{% if user_detail %}
+  Edit User Account Details of {{ user_detail.username }}
+{% else %}
+  Add User Account
+{% endif %}
+{% endblock %}
+
+{% block main_container %}
+  {% load crispy_forms_tags %}
+
+  <div class="form-panel">
+    <div class="form">
+
+      {% if form.errors %}
+          <div class="alert alert-danger">
+              <a class="close" data-dismiss="alert" href="#">×</a>
+              There are errors in the form submitted (see below). Please try again.
+          </div>
+      {% endif %}
+
+      <div class="pull-right "><span id="username-status" class=""></span></div>
+      {% crispy form %}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extrajs %}
+
+<script type="text/javascript">
+$(function() {
+
+  $('#sidebar-menu-item-users').addClass('active');
+
+  form_sel = "#username-status";
+
+  $(form_sel).empty();
+  $("#id_username").on("input", function() {
+    $(form_sel).attr("class", "label label-default");
+    $(form_sel).empty();
+
+    username = $("#id_username").val();
+    if (username && (username != "{{ user_detail.username }}")) {
+
+      $.ajax({
+        type: 'GET', url: "{% url 'userman:check_username' %}", dataType: 'json', data: $.param({"username": username}),
+        success: function(user) {
+          if (user.exists) {
+
+            $(form_sel).attr("class", "label label-danger");
+            $(form_sel).empty().html('<span class="icon-close"></span> Username already exists')
+            return;
+          }
+
+          $(form_sel).attr("class", "label label-success");
+          $(form_sel).empty().html('<span class="icon-check"></span> Username available')
+          return;
+        },
+        error: function(jqXHR, textStatus, errorThrownerror) {
+            if (jqXHR.status != 400) {
+                alert('Failed request: ' + textStatus + ": Please refresh");
+                $(form_sel).empty();
+                return;
+            }
+            $(form_sel).html(jqXHR.responseText);
+            $(form_sel + ' .cancel').click(function() {
+                $(form_sel).empty();
+            });
+        }
+      });
+    }
+  });
+});
+</script>
+{% endblock %}
+

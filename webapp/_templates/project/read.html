@@ -1,0 +1,98 @@
+{% extends "base_panel.html" %}
+{% load i18n %}
+
+{% block title %}Read Project Details{% endblock %}
+
+{% block top_container %}
+  Project Details of /{{ project_detail.slug }}/
+  <p class="pull-right">
+    <a href="{% url "app:edit_project" project_detail.pk %}" class="btn btn-info btn-sm"> <i class="icon-pencil"></i> <span> Edit Project Details</span> </a>
+    {% if project_detail.live_mode %}
+      <a href="{% url "app:switch_project" project_detail.pk 0 %}" class="btn btn-sm btn-danger"><i class="icon-ban"></i> Switch to Test Mode</a>
+    {% else %}
+      <a href="{% url "app:switch_project" project_detail.pk 1 %}" class="btn btn-sm btn-success"><i class="icon-check"></i> Switch to Live Mode</a>
+    {% endif %}
+
+  </p>
+{% endblock %}
+
+
+{% block main_container %}
+
+  <table class="table">
+    <tbody>
+      <tr>
+        <th>Name</th>
+        <td>{{ project_detail.name|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Slug</th>
+        <td>
+          {{ project_detail.slug|default:'-' }}
+        </td>
+      </tr>
+      <tr>
+        <th>Description</th>
+        <td>{{ project_detail.description|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th colspan=1>Pages</th>
+        <td>
+          {% if project_detail.pages.all %}
+            {% for page in project_detail.pages.all %}
+              <div><a href="{% url "app:read_page" page.pk %}">{{ page.name }}</a></div>
+            {% endfor %}
+          {% else %}
+            No Page
+          {% endif %}
+          <h6><a href="{% url 'app:add_page' %}"><i class="icon-plus"></i> Add More Page</a></h6>
+        </td>
+      </tr>
+      <tr>
+        <th>Owner</th>
+        <td>{{ project_detail.owner.name|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Added by</th>
+        <td>{{ project_detail.added_by.username|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Date Added</th>
+        <td>{{ project_detail.datetime_added|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Last Modified</th>
+        <td>{{ project_detail.last_modified|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <td> 
+          {% if project_detail.live_mode %}
+            <span class="label label-success">Live Mode</span>
+          {% else %}
+            <span class="label label-default">Test Mode</span>
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan=2>
+          <a href="{% url 'app:projects' %}" class="btn btn-sm btn-default">Back to All Projects</a>
+        </th>
+      </tr>
+    </tfoot>
+  </table>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-projects').addClass('active');
+        });
+    </script>
+
+{% endblock %}

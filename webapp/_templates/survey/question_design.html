@@ -1,0 +1,21 @@
+{% load crispy_forms_tags %}
+
+{% if question_form %}
+
+    <div class="question-tab" id="{{ question_slug }}">
+      <div class="form-group">
+
+      {% if edit_mode %}
+      <div class="hidden-phone pull-right">
+        <a href="#" class="edit-question btn btn-primary btn-xs" data-key="{{ question_slug }}"><i class="fa fa-pencil"></i></a>&nbsp;
+        <a href="#" class="delete-question btn btn-danger btn-xs" data-key="{{ question_slug }}"><i class="fa fa-trash-o"></i></a>
+      </div>
+      {% endif %}
+
+      {{ question_form }}
+
+      </div>
+    </div>
+
+{% endif %}
+

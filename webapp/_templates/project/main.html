@@ -1,0 +1,90 @@
+{% extends "base_panel.html" %}
+
+{% block title %}All Projects{% endblock %}
+
+{% block top_container %}
+  All Projects
+  <p class="pull-right">
+    <a href="{% url "app:add_project" %}" class="btn btn-info btn-sm"> <i class="icon-plus"></i> <span> Add Project</span> </a>
+  </p>
+{% endblock %}
+
+{% block main_container %}
+  <form class="form-inline content-nav" role="form" name="projectForm">
+    <div class="form-group">
+      <label><strong>FILTER </strong></label>
+ 
+      <select class="input-sm form-control" onChange="projectForm.submit();" name="owner">
+        <option value=""> [ All Owners ] </option>
+        {% for owner_detail in all_owners %}
+          <option value="{{ owner_detail.pk }}" {% ifequal owner owner_detail.pk %}selected{% endifequal %}>{{ owner_detail.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <div class="table-autoscroll">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Pages</th>
+            <th>Added By</th>
+            <th>Date Added</th>
+            <th>Last Modified</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% if projects|length %}
+          {% for project in projects %}
+            <tr>
+              <td><a href="{% url 'app:read_project' project.pk %}">{{ project.name }}</a></td>
+              <td>/{{ project.slug }}/</td>
+              <td>{{ project.owner.name }}</td>
+              <td>
+                  {% if project.live_mode %}
+                    <span class="label label-success">Live Mode</span>
+                  {% else %}
+                    <span class="label label-default">Test Mode</span>
+                  {% endif %}
+              </td>
+              <td>{{ project.pages.all|length|default:0 }} Pages</td>
+              <td>{{ project.added_by.username }}</td>
+              <td>{{ project.datetime_added }}</td>
+              <td>{{ project.last_modified }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan=8>No record</td>
+          </tr>
+        {% endif %}
+        </tbody>
+
+        <tfoot>
+          <tr>
+            <th colspan=7>Total Projects</th>
+            <th>{{ projects|length }}</th>
+          </tr>
+        </tfoot>
+
+      </table>
+  </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-projects').addClass('active');
+        });
+    </script>
+
+{% endblock %}

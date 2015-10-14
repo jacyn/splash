@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title_wrap %}{{ page.project.name }} - {{ page.name }} {% endblock %}
+
+{% block base_container %} 
+  <div class="layout-preview"></div>
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '116673848684974',
+        xfbml      : true,
+        version    : 'v2.4'
+      });
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+          console.log('Logged in.');
+        }
+        else {
+          FB.login();
+        }
+      });
+    };
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "//connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+     }(document, 'script', 'facebook-jssdk'));
+  </script>
+
+  <script src="{{ STATIC_URL }}webapp/js/layout.v1.1.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    $(function() {
+      localStorage.setItem("survey-preview-url", '{% url "app:survey_preview" %}')
+      localStorage.setItem("survey-handler-url", '{% url "app:survey_handler" %}')
+      localStorage.setItem("survey-test-enabled", '0')
+
+      viewLayout('{% url "app:layout_objects" %}', "{{ page.pk }}");
+    });
+  </script>
+{% endblock %}

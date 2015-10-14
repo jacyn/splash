@@ -1,0 +1,41 @@
+{% extends "base_panel.html" %}
+
+{% block title %}{% if page_detail %}Edit{% else %}Add{% endif %} Page Details{% endblock %}
+
+{% block top_container %}
+{% if page_detail %}
+  Edit Page Details of /{{ page_detail.project.slug }}/{{ page_detail.slug }}/
+{% else %}
+  Add Page
+{% endif %}
+{% endblock %}
+
+{% block main_container %}
+  {% load crispy_forms_tags %}
+
+  <div class="form-panel">
+    <div class="form">
+
+      {% if form.errors %}
+          <div class="alert alert-danger">
+              <a class="close" data-dismiss="alert" href="#">×</a>
+              There are errors in the form submitted (see below). Please try again. 
+          </div>
+      {% endif %}
+      {% crispy form %}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-pages').addClass('active');
+        });
+    </script>
+
+{% endblock %}

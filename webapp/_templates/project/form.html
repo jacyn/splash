@@ -1,0 +1,43 @@
+{% extends "base_panel.html" %}
+
+{% block title %}{% if project_detail %}Edit{% else %}Add{% endif %} Project Details{% endblock %}
+
+{% block top_container %}
+{% if project_detail %}
+  Edit Project Details of /{{ project_detail.slug }}/
+{% else %}
+  Add Project
+{% endif %}
+{% endblock %}
+
+{% block main_container %}
+  {% load crispy_forms_tags %}
+
+  <div class="form-panel">
+    <div class="form">
+
+      {% if form.errors %}
+          <div class="alert alert-danger">
+              <a class="close" data-dismiss="alert" href="#">×</a>
+              There are errors in the form submitted (see below). Please try again.
+          </div>
+      {% endif %}
+
+      <div class="pull-right "><span id="username-status" class=""></span></div>
+      {% crispy form %}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-projects').addClass('active');
+        });
+    </script>
+
+{% endblock %}

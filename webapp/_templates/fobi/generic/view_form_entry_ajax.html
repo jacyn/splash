@@ -1,0 +1,10 @@
+{% extends fobi_theme.form_view_ajax %}
+
+{% load i18n %}
+
+{% block form_page_header_wrapper %}{% endblock %}
+
+{% block form_required_fields_message_block %} {% blocktrans %} "test"  {% endblocktrans %}  {% endblock %}
+{% block form_primary_button_text %}{% if fobi_form_submit_button_text %}{{ fobi_form_submit_button_text }}{% else %}{% trans "Submit" %}{% endif %}{% endblock %}
+
+

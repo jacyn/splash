@@ -1,0 +1,268 @@
+
+.layout {
+  border: 1px solid #e7e7e7;
+  background-color: #f7f8fa; /*rgb(240, 240, 240); */
+  width: 640px;
+  height: 480px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.table-autoscroll {
+  overflow: auto;
+  white-space: nowrap;
+}
+
+.properties {
+  height: 100% !important;
+  z-index: 10;
+  position: absolute;
+}
+
+.properties header {
+  background-color: #52C3D8 !important;
+  color: white;
+  font-size: 20px;
+  padding: 10px;
+  text-align: center;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.object-properties {
+  overflow: auto;
+  height: 480px;
+}
+
+.sub-properties {
+  background-color: white;
+  margin-top: 12px;
+  /* padding: 10px; */
+  height: 640px;
+  overflow: auto;
+}
+
+.properties-form .form-group {
+  border-bottom: 1px solid #D9EDF7;
+  margin: 0px;
+  padding-bottom: 10px;
+}
+
+.properties-form .form-actions {
+  margin: 0px;
+  padding: 10px 0px 10px 0px;
+  text-align: center;
+}
+
+.survey-properties .title {
+  /* position: absolute; */
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.survey {
+  margin: 10px 0 !important;
+  padding-left: 5px !important;
+}
+
+.detail-object {
+  padding: 0px 20px 0px 20px;
+}
+
+.survey-detail {
+  padding-bottom: 5px;
+}
+
+.checkbox {
+  width: inherit !important;
+  height: inherit !important;
+}
+
+.report-title {
+  font-weight: bold;
+  background-color: #EAEAEA;
+  padding: 10px;
+}
+
+.content-nav {
+  padding: 10px;
+  background-color: #DEDEDE;
+}
+
+.edit-object {
+  /* overflow: hidden !important;  */
+  border: 1px dotted white; 
+}
+
+.properties-nav  {
+  width: 100%;
+  background-color: #f7f8fa;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.layout-preview {
+  /* background-color: rgb(240, 240, 240); */
+  width: 100%;
+  height: 100%;
+}
+
+.object {
+  background-color: #52C3D8;
+  overflow: auto;
+  color: white;
+
+  -webkit-transform: translate(0px, 0px);
+          transform: translate(0px, 0px);
+
+  z-index: 0;
+  position: relative;
+
+  box-sizing: border-box;
+}
+
+.object:hover {
+  background-color: #1C96AC;
+  /* overflow: hidden; */
+}
+
+.object-preview {
+  background-color: rgba(0, 0, 0, 0.5); /* rgba(225, 225, 225, 0.5); */
+  overflow: auto;
+  color: white;
+
+  -webkit-transform: translate(0px, 0px);
+          transform: translate(0px, 0px);
+
+  position: relative;
+}
+
+.object img, .object-preview img {
+  overflow: hidden;
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.object img:hover {
+}
+
+.help-block {
+  /* color: white !important;  */
+  font-style: italic;
+}
+
+.question-tab {
+  background-color: rgba(225, 225, 225, 0.5); 
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.question-form {
+  padding: 10px;
+  border: white dashed 1px;
+  margin: 10px 0;
+}
+
+.checkbox-custom {
+  position: relative !important; 
+  min-height: 0 !important;
+}
+
+.view-object-properties {
+  position: absolute;
+  top: 4px;
+  right: 40px;
+  z-index: 3;
+}
+
+.btn-inverse {
+  background-color: black;
+  color: white;
+}
+
+.btn-white {
+  background-color: white;
+  color: black;
+}
+
+.btn-no-radius {
+  border-radius: 0 !important;
+}
+
+.object p {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 2;
+  padding: 10px;
+  width: 100%;
+  height: 35px;
+  color: black;
+  font-size: 14px;
+  background-color: white;
+  /* background-color: rgba(225, 225, 225, 0.5); */
+  text-transform: capitalize;
+  font-weight: bold;
+  text-align: left;
+}
+
+.survey-form {
+  z-index: 1;
+  padding: 20px;
+  background: none;
+  font-size: inherit;
+  font-family: inherit;
+  /* margin: 10px; */
+  overflow: auto;
+  position: absolute;
+  /* overflow: hidden; */
+  /* position: absolute; */
+  text-align: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.survey-form .form-style {
+  position: relative;
+}
+
+.survey-form .form-control {
+  text-align: inherit;
+}
+
+.survey-form .thank-you-message {
+}
+
+.survey-form h4 {
+  text-transform: none !important;
+}
+
+.remove-object {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  padding: 1px 2px 1px 2px;
+  border-radius: 20px;
+  color: #111;
+}
+
+.form-design .form-text-field{
+  border: 1px white dashed !important;
+  border-radius: 0px !important;
+  background-color: transparent;
+  color: inherit;
+}
+
+.form-text-field::-webkit-input-placeholder { color: inherit !important; }
+.form-text-field:-moz-placeholder { color: inherit !important; }
+.form-text-field::-moz-placeholder { color: inherit !important; }
+.form-text-field:-ms-input-placeholder { color: inherit !important; }
+
+.survey-questions-design {
+
+}

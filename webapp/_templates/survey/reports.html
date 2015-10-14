@@ -1,0 +1,113 @@
+{% extends "base_panel.html" %}
+
+{% block title %}Survey Reports{% endblock %}
+
+{% block top_container %}
+  Survey Reports
+
+  <p class="pull-right">
+    <div class="btn-group pull-right hidden-xs">
+      <button class="dropdown-toggle btn btn-default btn-sm" data-toggle="dropdown">
+        <i class="icon-arrow-down"></i> Download as 
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        {% for format, label in export_formats %}
+          <li>
+            <a href="#" 
+              onclick="var f=document.forms['report_query']; var exp=document.getElementById('id_export_to'); exp.value='{{ format }}'; $(f).submit(); exp.value=''; return false;"
+              >{{ label }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <form method="get" id="id_report_query" action="" name="report_query">
+      <input type="hidden" id="id_export_to" name="export_to" value="" />
+      <input type="hidden" id="id_page" name="page" value="{{ page }}" />
+      <input type="hidden" id="id_survey" name="survey" value="{{ survey }}" />
+    </form>
+  </p>
+
+{% endblock %}
+
+{% block main_container %}
+
+<form class="form-inline content-nav" role="form" name="projectPageForm">
+<div class="form-group">
+  <label><strong>FILTER </strong></label>
+
+  <select class="input-sm form-control" onChange="exp=$('#select_id_survey').val(''); projectPageForm.submit();" name="page">
+    <option value=""> [ Select Page URL ] </option>
+    {% for page_detail in all_pages %}
+      <option value="{{ page_detail.pk }}" {% ifequal page page_detail.pk %}selected{% endifequal %}>/{{ page_detail.project.slug }}/{{ page_detail.slug }}/</option>
+    {% endfor %}
+  </select>
+  
+  <select class="input-sm form-control" onChange="projectPageForm.submit();" name="survey" id="select_id_survey">
+    <option value="">{% if all_surveys %}[ All Survey ]{% else %} --- {% endif %}</option>
+    {% for survey_detail in all_surveys %}
+      <option value="{{ survey_detail.pk }}" {% ifequal survey survey_detail.pk %}selected{% endifequal %}>{{ survey_detail.title }}</option>
+    {% endfor %}
+  </select>
+
+</div>
+</form>
+
+{% if surveys %}
+  {% for sr in reports %}
+
+    <div class="table-autoscroll">
+
+      <div class="report-title">
+          {{ sr.survey.title }} ({{ sr.date_revised|date:"M d Y h:i:s a" }}) Data
+      </div>
+
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+          {% for value in sr.report.headers %}
+            <th>{{ value }}</th>
+          {% endfor %}
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for line in sr.report.data %}
+            <tr>
+            {% for value in line %}
+              <td>{{ value|default:'-' }}</td>
+            {% endfor %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td>No survey data</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+
+  {% empty %}
+    <div class="alert">No survey data.</div>
+
+  {% endfor %}
+{% else %}
+    <div class="alert">
+      No survey for this page.
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+     $(document).ready(function(){
+        $('.dropdown-toggle').dropdown()
+    });
+  </script>
+{% endblock %}
+

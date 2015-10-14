@@ -1,0 +1,88 @@
+{% extends "base_panel.html" %}
+{% load i18n %}
+
+{% block title %}Read Page Details{% endblock %}
+
+{% block top_container %}
+  Page Details of 
+    {% if page_detail.page_objects.all %}
+      <a href="#" onclick="window.open('{% url "page_view" page_detail.project.slug page_detail.slug %}')" >/{{ page_detail.project.slug }}/{{ page_detail.slug }}/</a>
+    {% else %}
+      /{{ page_detail.project.slug }}/{{ page_detail.slug }}/<small>(No Layout)</small>
+    {% endif %}
+  
+  <p class="pull-right">
+    {% if user.is_superuser or user.is_staff %}<a href="{% url "app:edit_page" page_detail.pk %}" class="btn btn-info btn-sm"> <i class="icon-pencil"></i> <span> Edit Page Details</span> </a>{% endif %}
+    <a href="{% url "app:layout_main" page_detail.pk %}" class="btn btn-primary btn-sm"> <i class="icon-pencil"></i> <span> Customize Page Layout</span> </a>
+    {% if page_detail.live_mode %}
+      <a href="{% url "app:switch_page" page_detail.pk 0 %}" class="btn btn-sm btn-danger"><i class="icon-ban"></i> Switch to Test Mode</a>
+    {% else %}
+      <a href="{% url "app:switch_page" page_detail.pk 1 %}" class="btn btn-sm btn-success"><i class="icon-check"></i> Switch to Live Mode</a>
+    {% endif %}
+
+  </p>
+{% endblock %}
+
+
+{% block main_container %}
+
+  <table class="table">
+    <tbody>
+      <tr>
+        <th>Name</th>
+        <td>{{ page_detail.name|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Slug</th>
+        <td>
+          {{ page_detail.slug|default:'-' }}
+        </td>
+      </tr>
+      <tr>
+        <th>Description</th>
+        <td>{{ page_detail.description|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Added by</th>
+        <td>{{ page_detail.added_by.username|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Date Added</th>
+        <td>{{ page_detail.datetime_added|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Last Modified</th>
+        <td>{{ page_detail.last_modified|default:'-' }}</td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <td> 
+          {% if page_detail.live_mode %}
+            <span class="label label-success">Live Mode</span>
+          {% else %}
+            <span class="label label-default">Test Mode</span>
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan=2>
+          <a href="{% url 'app:pages' %}" class="btn btn-sm btn-default">Back to All Pages</a>
+        </th>
+      </tr>
+    </tfoot>
+  </table>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // highlight menu item
+            $('#sidebar-menu-item-pages').addClass('active');
+        });
+    </script>
+
+{% endblock %}

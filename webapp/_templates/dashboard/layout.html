@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block main_container %} 
+
+<button id="add-object" class="btn btn-primary">Add object</button>
+<button id="save-layout" class="btn btn-primary">Save Layout</button>
+
+<div id="layout-properties" class="well">
+</div>
+
+<div class="gridster">
+    <ul>
+        <li data-row="1" data-col="1" data-sizex="1" data-sizey="1"></li>
+        <li data-row="2" data-col="1" data-sizex="1" data-sizey="1"></li>
+        <li data-row="3" data-col="1" data-sizex="1" data-sizey="1"></li>
+ 
+        <li data-row="1" data-col="2" data-sizex="2" data-sizey="1"></li>
+        <li data-row="2" data-col="2" data-sizex="2" data-sizey="2"></li>
+ 
+        <li data-row="1" data-col="4" data-sizex="1" data-sizey="1"></li>
+        <li data-row="2" data-col="4" data-sizex="2" data-sizey="1"></li>
+        <li data-row="3" data-col="4" data-sizex="1" data-sizey="1"></li>
+ 
+        <li data-row="1" data-col="5" data-sizex="1" data-sizey="1"></li>
+        <li data-row="3" data-col="5" data-sizex="1" data-sizey="1"></li>
+ 
+        <li data-row="1" data-col="6" data-sizex="1" data-sizey="1"></li>
+        <li data-row="2" data-col="6" data-sizex="1" data-sizey="2"></li>
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function(){ //DOM Ready
+ 
+  $(".gridster ul").gridster({
+    widget_margins: [10, 10],
+    widget_base_dimensions: [140, 140]
+  });
+ 
+});
+</script>
+{% endblock %}

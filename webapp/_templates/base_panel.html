@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block base_container %}
+
+    <section id="container">
+
+        <header class="header black-bg">
+            <div class="sidebar-toggle-box">
+                <div class="fa fa-bars tooltips" data-placement="right" data-original-title="Toggle Navigation"></div>
+            </div>
+
+            <!--logo start-->
+            <a href="index.html" class="logo"><b>SPLASH<span>SITE</span></b></a>
+            <!--logo end-->
+            <div class="top-menu">
+              <ul class="nav pull-right top-menu">
+                <li class="hidden-phone"> <p class="user"><i class="icon-user"></i> Welcome <strong>{{ user.username }}</strong>!</p> </li>
+                <li><a class="logout" href="{% url 'logout' %}"><i class="icon-logout"></i><span class="hidden-phone"> Logout</span></a></li>
+              </ul>
+            </div>
+        </header> 
+        <aside>
+          <div id="sidebar" class="nav-collapse " tabindex="5000" style="overflow: hidden; outline: none;">
+              <!-- sidebar menu start-->
+              <ul class="sidebar-menu" id="nav-accordion">
+              
+                  <li class="sub-menu dcjq-parent-li">
+                      <a id="sidebar-menu-item-dashboard" href="{% url 'dashboard:main' %}" title="Dashboard">
+                          <i class="fa fa-dashboard"></i>
+                          <span>Dashboard</span>
+                      </a>
+                  </li>
+                  {% if user.is_superuser %}
+                  <li class="sub-menu dcjq-parent-li">
+                      <a id="sidebar-menu-item-projects" href="{% url 'app:projects' %}" title="Projects">
+                          <i class="icon-folder"></i>
+                          <span>Projects</span>
+                      </a>
+                  </li>
+                  {% endif %}
+                  <li class="sub-menu dcjq-parent-li">
+                      <a id="sidebar-menu-item-pages" href="{% url 'app:pages' %}" title="Pages">
+                          <i class="icon-docs"></i>
+                          <span>Pages</span>
+                      </a>
+                  </li>
+                  {% if user.is_staff %}
+                  <li class="sub-menu dcjq-parent-li">
+                      <a id="sidebar-menu-item-users" href="{% url 'userman:main' %}" title="User Accounts">
+                          <i class="icon-users"></i>
+                          <span>User Accounts</span>
+                      </a>
+                  </li>
+                  {% endif %}
+                  <li class="sub-menu dcjq-parent-li">
+                      <a id="sidebar-menu-item-reports" href="{% url 'app:survey_reports' %}" title="Survey Reports">
+                          <i class="icon-bar-chart"></i>
+                          <span>Survey Reports</span>
+                      </a>
+                  </li>
+              </ul>
+              <!-- sidebar menu end-->
+          </div>
+      </aside>
+
+      <section id="main-content">
+        {% block sub_container %}
+        <section class="wrapper">
+          <h3><strong>
+            {% block top_container %}{% endblock %}
+          </strong></h3>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="content-panel">
+                {% block notifications %}
+                  <div style="margin: 10px;">
+                    {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == "success" %}
+                            {% if forloop.first %}
+                                <div class="alert alert-success">
+                                    <a class="close" data-dismiss="alert" href="#">×</a>
+                            {% endif %}
+                                    <p>{{ message }}</p>
+                            {% if forloop.last %}
+                                </div>
+                            {% endif %}
+                        {% elif message.tags == "error" %}
+                            {% if forloop.first %}
+                                <div class="alert alert-danger">
+                                    <a class="close" data-dismiss="alert" href="#">×</a>
+                            {% endif %}
+                                    <p>{{ message }}</p>
+                            {% if forloop.last %}
+                                </div>
+                            {% endif %}
+                        {% elif message.tags == "info" %}
+                            {% if forloop.first %}
+                                <div class="alert alert-info">
+                                    <a class="close" data-dismiss="alert" href="#">×</a>
+                            {% endif %}
+                                    <p>{{ message }}</p>
+                            {% if forloop.last %}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+                {% endblock %}
+
+                {% block main_container %}{% endblock %}
+              </div>
+            </div>
+          </div>
+        </section>
+        {% endblock %}
+      </section>
+
+  </section>
+
+{% endblock %}
+
+
