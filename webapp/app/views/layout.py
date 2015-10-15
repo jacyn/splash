@@ -28,12 +28,12 @@ def main(request, page_id=None, template_name="layout/main.html"):
     if page_id:
         page = app_models.Page.objects.get(pk=page_id)
 
-    object_last_sequence = 1
+    object_last_sequence = 0
     try:
         last_object = page.page_objects.latest('sequence').code
         object_last_sequence = int(last_object.replace("object-", ""))
     except app_models.Object.DoesNotExist:
-        object_last_sequence = 1
+        object_last_sequence = 0
   
     http_response = render_to_response(
         template_name, 

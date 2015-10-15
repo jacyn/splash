@@ -1,10 +1,13 @@
 import sys
+import re 
+
 from datetime import date, datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.template import Template
 from django.template.defaultfilters import slugify
+from django.conf import settings
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Fieldset, ButtonHolder, Submit, Div, Button, HTML, Hidden
@@ -225,31 +228,40 @@ class SurveyFieldForm(forms.Form):
 
         self.fields[field_key] =  field_class(**field_args)
 
-        if field_type == fields.DOB:
+        if field_type in (fields.DOB, fields.DATE, fields.DATE_TIME):
+            self.fields[field_key].widget.attrs["class"] = "default-date-picker form-control"
+            if field_type == fields.DATE_TIME:
+                self.fields[field_key].widget.attrs["class"] = "default-datetime-picker form-control"
+
             now = datetime.now()
             years = list(range(now.year, now.year - 120, -1))
             self.fields[field_key].widget.years = years
+
+            self.fields[field_key].input_formats = settings.DATE_INPUT_FORMATS
+
 
         if field["placeholder_text"] and not field["default"]:
             text = field["placeholder_text"]
             self.fields[field_key].widget.attrs["placeholder"] = text
 
-        if field_type not in (fields.RADIO_MULTIPLE, fields.CHECKBOX_MULTIPLE, fields.CHECKBOX):
+        if field_type not in (fields.RADIO_MULTIPLE, fields.CHECKBOX_MULTIPLE, fields.CHECKBOX, fields.DOB, fields.DATE, fields.DATE_TIME):
             self.fields[field_key].widget.attrs["class"] = "form-control input-sm"
 
-        # if field_type == fields.SELECT_MULTIPLE:
-            # change widget class
+        if field_type in (fields.SELECT_MULTIPLE, fields.SELECT):
+            self.fields[field_key].widget.attrs["class"] = "question-select form-control input-sm"
 
-        self.helper.layout = Layout(
+        self.helper.layout = Layout( 
             Field(self.fields[field_key], css_class='form-control input-sm')
             )
+
 
 class SurveyForm(forms.ModelForm):
     class Meta:
         model = app_models.Survey
         fields = '__all__'
-        exclude = [ 'title', 'slug', 'submit', 'submission_type', 'thanks', 'active', 'label', 'field_type', 'page_object', 'redirect_url', ] # exclude
-
+        exclude = [ 'title', 'slug', 'submit', 'submission_type', 'thanks', 
+                    'active', 'label', 'field_type', 'page_object', 'redirect_url', 
+                    'sms_notification_enabled', 'sms_notification_sender_alias', 'sms_notification_recipient', 'sms_notification_message', ] # exclude
 
     helper = FormHelper()
     helper.form_tag = False
@@ -321,14 +333,20 @@ class SurveyForm(forms.ModelForm):
                 self.initial[field_key] = initial_val
             self.fields[field_key] = field_class(**field_args)
 
-            if field.field_type == fields.DOB:
+            if field.field_type in (fields.DOB, fields.DATE, fields.DATE_TIME):
+                self.fields[field_key].widget.attrs["class"] = "default-date-picker form-control"
+                if field.field_type == fields.DATE_TIME:
+                    self.fields[field_key].widget.attrs["class"] = "default-datetime-picker form-control"
+
                 now = datetime.now()
                 years = list(range(now.year, now.year - 120, -1))
                 self.fields[field_key].widget.years = years
 
+                self.fields[field_key].input_formats = settings.DATE_INPUT_FORMATS
+
 
             # Add identifying CSS classes to the field.
-            css_class = field_class.__name__.lower()
+            #css_class = field_class.__name__.lower()
 
             """
             if field.required:
@@ -336,13 +354,16 @@ class SurveyForm(forms.ModelForm):
                 if field.field_type not in (fields.CHECKBOX_MULTIPLE, fields.CHECKBOX):
                     self.fields[field_key].widget.attrs["required"] = ""
             """
-            self.fields[field_key].widget.attrs["class"] = css_class
+            #self.fields[field_key].widget.attrs["class"] = css_class
             if field.placeholder_text and not field.default:
                 text = field.placeholder_text
                 self.fields[field_key].widget.attrs["placeholder"] = text
 
-            if field.field_type not in (fields.RADIO_MULTIPLE, fields.CHECKBOX_MULTIPLE, fields.CHECKBOX):
+            if field.field_type not in (fields.RADIO_MULTIPLE, fields.CHECKBOX_MULTIPLE, fields.CHECKBOX, fields.DOB, fields.DATE, fields.DATE_TIME):
                 self.fields[field_key].widget.attrs["class"] = "input-sm"
+
+            if field.field_type == fields.SELECT_MULTIPLE:
+                self.fields[field_key].widget.attrs["class"] = "question-select"
 
             crispy_layout_fields.append(
                 Div(
@@ -353,13 +374,37 @@ class SurveyForm(forms.ModelForm):
 
         crispy_layout_fields.append(
             FormActions(
-                Submit('save_changes', form.submit, css_class="btn btn-theme btn-sm"),
+                Submit('save_changes', "Submit", css_class="btn btn-theme btn-sm"),
             )
         )
 
         self.helper.layout = Layout(
             *crispy_layout_fields
             )
+
+
+    def clean(self):
+        cleaned_data = super(SurveyForm, self).clean()
+        mobile_number_fields = self.form_fields.filter(field_type=fields.MOBILE_NUMBER).values_list('slug', flat=True)
+
+        for key in mobile_number_fields:
+            msisdn = self.cleaned_data.get(key, '')
+            if msisdn:
+                if (not msisdn.startswith('09')) and (not msisdn.startswith('639')):
+                    self.add_error(key, "Mobile number must start with '09' or '639'")
+
+                if (msisdn.startswith('09')) and (not re.match(r'^\d{11}$', msisdn)):
+                    self.add_error(key, "Mobile number starts with '09' must be 11 digits")
+
+                if (msisdn.startswith('639')) and (not re.match(r'^\d{12}$', msisdn)):
+                    self.add_error(key, "Mobile number starts with '639' must be 12 digits")
+
+                msisdn_telco = settings.FRANCHISE_LOOKUP.resolve_network(msisdn)
+                msisdn_type = settings.FRANCHISE_LOOKUP.resolve_type(msisdn)
+                if (not msisdn_telco) and (not msisdn_type):
+                    self.add_error(key, "Invalid mobile number")
+
+        return cleaned_data
 
     def get_new_model(self, **kwargs):
         defaults = dict()
@@ -380,7 +425,7 @@ class SUBMISSION_TYPE(object):
 
     CHOICES = (
         (NORMAL, _("Normal Form")),
-        (FACEBOOK, _("Facebook")),
+        #(FACEBOOK, _("Facebook")),
     )
 
 

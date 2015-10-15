@@ -2,21 +2,12 @@
 
 {% block title %}Customize Page Layout{% endblock %}
 
-{% block extracss %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}flat_mobile_devices/devices.min.css" type="text/css">
-{% endblock %}
-
 {% block top_container %}
-  <div class="btn-group">
-    <button id="design-layout-button" class="btn btn-default active hidden-phone"><i class="icon-wrench"></i> Design</button>
-    <button id="preview-layout-button" class="btn btn-default hidden-phone"><i class="icon-eye"></i> Preview</button>
-  </div>
-
   Page Layout of /{{ page.project.slug }}/{{ page.slug }}/
   <p class="pull-right">
 
     <button id="save-layout" class="btn btn-theme btn-sm hidden-phone"> <i class="icon-control-play"></i> Save Page Layout</button>
-    <!--- <button id="preview-layout" class="btn btn-info btn-sm hidden-phone" onclick="window.open('{% url "app:layout_preview" %}')"><i class="icon-eye"></i> Preview Page Layout</button> -->
+    <button id="preview-layout" class="btn btn-info btn-sm hidden-phone" onclick="window.open('{% url "app:layout_preview" %}')"><i class="icon-eye"></i> Preview Page Layout</button>
     <a href="{% url 'app:read_page' page.pk %}" class="btn btn-default btn-sm"> Back to Page Details</a>
   </p>
 {% endblock %}
@@ -47,20 +38,6 @@
       </aside>
   </div>
 
-  <div id="preview">
-    <div class="marvel-device iphone6 silver">
-        <div class="top-bar"></div>
-        <div class="sleep"></div>
-        <div class="volume"></div>
-        <div class="camera"></div>
-        <div class="sensor"></div>
-        <div class="speaker"></div>
-        <iframe class="screen" style="z-index: 3"></iframe> 
-        <div class="home"></div>
-        <div class="bottom-bar"></div>
-    </div>
-  </div>
-
 </div>
 <div class="hidden-lg hidden-md hidden-sm"><p>You are not allowed to customize layout here</p></div>
 
@@ -70,30 +47,11 @@
 
   {{ block.super }}
 
-  <script src="{{ STATIC_URL }}flat_mobile_devices/main.min.js" type="text/javascript"></script>
   <script src="{{ STATIC_URL }}webapp/js/layout.v1.1.js" type="text/javascript"></script>
   <script type="text/javascript">
     $(function() {
 
       $('#sidebar-menu-item-pages').addClass('active');
-
-      $('#preview').hide();
-      $('#preview-layout-button').on('click', function () {
-          $('.chat-room').hide();
-          $('#design-layout-button').removeClass("active");
-          $(this).addClass("active");
-
-          $('#preview .screen').attr('src', '{% url "app:layout_preview" %}');
-          $('#preview').show();
-      });
-
-      $('#design-layout-button').on('click', function () {
-          $('#preview').hide();
-          $('#preview-layout-button').removeClass("active");
-          $(this).addClass("active");
-
-          $('.chat-room').show();
-      });
 
       $(window).bind('beforeunload', function(){
           deleteSurvey();

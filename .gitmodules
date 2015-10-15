@@ -1,0 +1,3 @@
+[submodule "vendor/franchise-rc"]
+	path = vendor/franchise-rc
+	url = git@git.wyrls.net:wyrls/franchise-rc.git

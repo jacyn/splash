@@ -27,6 +27,7 @@
       <input type="hidden" id="id_export_to" name="export_to" value="" />
       <input type="hidden" id="id_page" name="page" value="{{ page }}" />
       <input type="hidden" id="id_survey" name="survey" value="{{ survey }}" />
+      <input type="hidden" id="id_revision" name="revision" value="{{ revision }}" />
     </form>
   </p>
 
@@ -38,7 +39,7 @@
 <div class="form-group">
   <label><strong>FILTER </strong></label>
 
-  <select class="input-sm form-control" onChange="exp=$('#select_id_survey').val(''); projectPageForm.submit();" name="page">
+  <select class="input-sm form-control" onChange="exp=$('#select_id_survey').val(''); exp=$('#select_id_revision').val(''); projectPageForm.submit();" name="page">
     <option value=""> [ Select Page URL ] </option>
     {% for page_detail in all_pages %}
       <option value="{{ page_detail.pk }}" {% ifequal page page_detail.pk %}selected{% endifequal %}>/{{ page_detail.project.slug }}/{{ page_detail.slug }}/</option>
@@ -49,6 +50,17 @@
     <option value="">{% if all_surveys %}[ All Survey ]{% else %} --- {% endif %}</option>
     {% for survey_detail in all_surveys %}
       <option value="{{ survey_detail.pk }}" {% ifequal survey survey_detail.pk %}selected{% endifequal %}>{{ survey_detail.title }}</option>
+    {% endfor %}
+  </select>
+
+  <select class="input-sm form-control" onChange="projectPageForm.submit();" name="revision" id="select_id_revision">
+    <option value="">{% if surveys %}[ All Versions ]{% else %} --- {% endif %}</option>
+    {% for survey_detail in surveys %}
+        {% ifequal survey survey_detail.pk %}
+            {% for survey_revision in survey_detail.revisions.all %}
+                <option value="{{ survey_revision.pk }}" {% ifequal revision survey_revision.pk %}selected{% endifequal %}>Version {{ survey_revision.revision_no }}</option>
+            {% endfor %}
+        {% endifequal %}
     {% endfor %}
   </select>
 

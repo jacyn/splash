@@ -6,7 +6,6 @@ class CustomUserBackend(object):
 
     def authenticate(self, username=None, password=None):
 
-        print >> sys.stderr, "starting to authenticate.. " 
         try:
             user = User.objects.get(username=username)
         except User.objects.DoesNotExists:

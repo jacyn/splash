@@ -211,3 +211,22 @@ XDN_MESSAGING_API_VSHORTCODE = "3456"
 
 XDN_MESSAGING_API_URL = "http://api.xdn.localhost/documents"
 XDN_MESSAGING_API_CONTENT_TYPE  = "application/vnd.net.wyrls.Document-v3+json"
+
+
+# franchise look are also a global setting, in use in several apps
+from wyrls.msisdn import telcofranchise
+franchise_xml = os.path.join(os.path.dirname(__file__), '..', '..', 'vendor', 'franchise-rc', 'franchise.xml')
+FRANCHISE_LOOKUP = telcofranchise.SimpleLookup(xml_file=franchise_xml)
+
+DATE_INPUT_FORMATS = [
+    '%Y-%m-%d %H:%M:%S',    # '2006-10-25 14:30:59'
+    '%Y-%m-%d %H:%M',       # '2006-10-25 14:30'
+    '%Y-%m-%d',             # '2006-10-25'
+    '%m/%d/%Y %H:%M:%S',    # '10/25/2006 14:30:59'
+    '%m/%d/%Y %H:%M',       # '10/25/2006 14:30'
+    '%m/%d/%Y',             # '10/25/2006'
+    '%m/%d/%y %H:%M:%S',    # '10/25/06 14:30:59'
+    '%m/%d/%y %H:%M',       # '10/25/06 14:30'
+    '%m/%d/%y'              # '10/25/06'
+]
+

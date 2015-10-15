@@ -233,25 +233,30 @@ function updateSmsNotifRecipientSel(objectId) {
   $(selId).append(
     $('<option>', {value:0, text:'None', selected: 'selected'})
   );
-  $.each(objectProperties.form.questions, function(key, question) {
-    if (question.active) {
-      if (question.field_type == 16) {
-        option_params = {value: question.slug, text: question.label}
 
-        if (objectProperties.form.sms_notification_recipient == question.slug) {
-          option_params['selected'] = 'selected';
+  if (objectProperties.form) {
+    $.each(objectProperties.form.questions, function(key, question) {
+      if (question.active) {
+        if (question.field_type == 16) {
+          option_params = {value: question.slug, text: question.label}
+
+          if (objectProperties.form.sms_notification_recipient == question.slug) {
+            option_params['selected'] = 'selected';
+          }
+          $(selId).append(
+            $('<option>', option_params)
+          );
         }
-        $(selId).append(
-          $('<option>', option_params)
-        );
       }
-    }
-  });
+    });
+  }
 }
 
 $(function() {
 
-  $("select").select2();
+  $('.default-date-picker').datepicker({format: 'mm/dd/yyyy'});
+  $(".default-datetime-picker").datetimepicker({format: 'mm/dd/yyyy hh:ii'});
+  $(".question-select").select2();
 
   updateSmsNotifRecipientSel("{{ object_code }}")
  

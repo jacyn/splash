@@ -21,6 +21,8 @@ from app import reporting as app_reporting
 from app import signals as app_signals
 from app.logger import AppLogger
 
+from webapp import jsonhandler
+
 
 def validate(survey_id, page_object, data):
     status = dict()
@@ -54,7 +56,7 @@ def validate(survey_id, page_object, data):
         for q in data["questions"]:
             data_questions_dict[q["slug"]] = q["label"]
 
-        data_questions = json.dumps(data_questions_dict, sort_keys=False)
+        data_questions = json.dumps(data_questions_dict, sort_keys=False, default=jsonhandler.polymorphic_handler)
 
         revision = None
         revision_questions = None
@@ -64,7 +66,7 @@ def validate(survey_id, page_object, data):
 
             revision = survey.revisions.latest('revision_no')
             revision_questions_dict = json.loads(revision.questions)
-            revision_questions = json.dumps(revision_questions_dict, sort_keys=False)
+            revision_questions = json.dumps(revision_questions_dict, sort_keys=False, default=jsonhandler.polymorphic_handler)
         else:
             # new survey
             survey = form.get_new_model(page_object=page_object)
@@ -496,6 +498,7 @@ def logged(survey_revision=None, log_enabled=True, log_ext=".splashsite.survey",
     return True
 
 
+from app import fields
 def handler(request, template_name='survey/design.html'):
     """
     submit survey details
@@ -518,9 +521,10 @@ def handler(request, template_name='survey/design.html'):
 
         form = app_forms.SurveyForm(survey, context, request.POST)
         if form.is_valid():
+            answers = None
             try:
-                answers = json.dumps(form.cleaned_data)
-            except:
+                answers = json.dumps(form.cleaned_data, default=jsonhandler.polymorphic_handler)
+            except Exception, e:
                 answers = None
 
             survey_result = form.get_new_model(survey_revision=survey_revision, test_mode=test_mode, answers=answers)
@@ -548,6 +552,7 @@ def handler(request, template_name='survey/design.html'):
             if not test_mode:
                 kwargs = dict(
                     success=1,
+                    data=answers,
                     errors=None,
                 )
                 logged(survey_revision=survey_revision, **kwargs)
@@ -597,6 +602,10 @@ def reports(request, template_name='survey/reports.html'):
 
     page = request.GET.get('page', 0)
     survey = request.GET.get('survey', 0)
+    revision = request.GET.get('revision', 0)
+    if revision:
+        revision = int(revision)
+
     if page:
         page = int(page)
         try:
@@ -614,6 +623,7 @@ def reports(request, template_name='survey/reports.html'):
         'page': page,
         'all_pages': pages,
         'survey': survey,
+        'revision': revision,
         'all_surveys': all_surveys,
         'surveys': surveys,
         'export_formats': settings.EXPORT_FORMATS,
@@ -621,7 +631,7 @@ def reports(request, template_name='survey/reports.html'):
 
     report_class = app_reporting.SurveyReport()
     if surveys:
-        report_class.generate(view_context, surveys)
+        report_class.generate(view_context, surveys, revision)
 
     if ('export_to' in request.GET) and (request.GET.get('export_to') in settings.MIMETYPE_MAP) and surveys:
         filetype = request.GET.get('export_to')

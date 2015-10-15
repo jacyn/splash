@@ -65,7 +65,7 @@ WIDGETS = {
     CHECKBOX_MULTIPLE: forms.CheckboxSelectMultiple,
     RADIO_MULTIPLE: forms.RadioSelect,
     DATE: SelectDateWidget,
-    DOB: SelectDateWidget,
+    #DOB: SelectDateWidget,
     HIDDEN: forms.HiddenInput,
 }
 

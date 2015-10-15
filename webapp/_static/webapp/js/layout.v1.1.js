@@ -581,6 +581,9 @@ function displayObjectProperties(id) {
             })
       );
 
+  $(".object-properties #heading-" + objectProperties.code + " .detail-nav").attr({ "open": ""})
+  $(".object-properties #heading-" + objectProperties.code + " .detail-nav span").attr("class", "fa fa-caret-up")
+
   positionOnTop(id);
 
   $(form_sel).empty().html('<h6 class="title">Loading ...</h6>');
@@ -732,11 +735,20 @@ function constructObject(objectSeq, objectProperties) {
         .append(
           $('<a/>')
             .attr({"href": "#"})
-            .addClass("pull-right")
-            .append('<span class="fa fa-times"></span>')
+            .addClass("pull-right detail-nav")
+            .append('<span class="fa fa-caret-down"></span>')
             .on("click", function() {
               var objectId = $(this).parent().attr('object-code');
-              removeObject(objectId);
+
+              if ($(".object-properties #heading-" + objectId + " .detail-nav").attr("open")) {
+                // hide properties
+                $(".object-properties #heading-" + objectId + " .detail-nav").removeAttr("open")
+                $(".object-properties #heading-" + objectId + " .detail-nav span").attr("class", "fa fa-caret-down")
+                $(".object-properties div.detail-object").empty()
+              }
+              else {
+                displayObjectProperties(objectId)
+              }
             })
         )
     )

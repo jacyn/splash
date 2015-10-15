@@ -32,3 +32,4 @@ simplejson==3.7.3
 six==1.8.0
 vishap==0.1.5
 wsgiref==0.1.2
+isodate==0.4.9
