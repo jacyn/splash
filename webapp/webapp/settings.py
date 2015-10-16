@@ -110,6 +110,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+import pytz
+LOCAL_TZINFO = pytz.timezone(TIME_ZONE)
+
 
 MEDIA_ROOT = env('WEBAPP_MEDIA_ROOT', valuetype=str, required=True)
 MEDIA_URL_DOMAIN = env('WEBAPP_MEDIA_URL_DOMAIN', '', valuetype=str, required=True)
@@ -187,9 +190,9 @@ ALLOWED_HOSTS = [
 
 LOGIN_REDIRECT_URL = '/'
 
-EMAIL_FROM = 'SPLASH <noreply@%s>' % MAIN_DOMAIN
+EMAIL_FROM = 'Admin <noreply@%s>' % MAIN_DOMAIN
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = "api.wyrls.net"
+EMAIL_HOST = env('WEBAPP_EMAIL_HOST', valuetype=str, required=False)
 EMAIL_PORT = 25
 
 # -- Export Reports
@@ -204,19 +207,20 @@ MIMETYPE_MAP = {
 }
 
 
-XDN_MESSAGING_API_USER = "u/5/testapp"
-XDN_MESSAGING_API_PSWD = "ufSJzHjP68ySByy9CpfZ"
-XDN_MESSAGING_API_USAGETYPE = "TEST_NB_FREE"
-XDN_MESSAGING_API_VSHORTCODE = "3456"
+XDN_MESSAGING_API_USER = env('WEBAPP_XDN_MESSAGING_API_USER', valuetype=str, required=True)
+XDN_MESSAGING_API_PSWD = env('WEBAPP_XDN_MESSAGING_API_PSWD', valuetype=str, required=True)
+XDN_MESSAGING_API_USAGETYPE = env('WEBAPP_XDN_MESSAGING_API_USAGETYPE', valuetype=str, required=True)
+XDN_MESSAGING_API_VSHORTCODE = env('WEBAPP_XDN_MESSAGING_API_VSHORTCODE', valuetype=str, required=True)
 
-XDN_MESSAGING_API_URL = "http://api.xdn.localhost/documents"
-XDN_MESSAGING_API_CONTENT_TYPE  = "application/vnd.net.wyrls.Document-v3+json"
+XDN_MESSAGING_API_URL = env('WEBAPP_XDN_MESSAGING_API_URL', valuetype=str, required=True)
+XDN_MESSAGING_API_CONTENT_TYPE  = env('WEBAPP_XDN_MESSAGING_API_CONTENT_TYPE', valuetype=str, required=True)
 
 
 # franchise look are also a global setting, in use in several apps
 from wyrls.msisdn import telcofranchise
 franchise_xml = os.path.join(os.path.dirname(__file__), '..', '..', 'vendor', 'franchise-rc', 'franchise.xml')
 FRANCHISE_LOOKUP = telcofranchise.SimpleLookup(xml_file=franchise_xml)
+
 
 DATE_INPUT_FORMATS = [
     '%Y-%m-%d %H:%M:%S',    # '2006-10-25 14:30:59'
@@ -229,4 +233,3 @@ DATE_INPUT_FORMATS = [
     '%m/%d/%y %H:%M',       # '10/25/06 14:30'
     '%m/%d/%y'              # '10/25/06'
 ]
-

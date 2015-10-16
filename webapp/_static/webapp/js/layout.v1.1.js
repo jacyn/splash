@@ -242,7 +242,7 @@ function addObject(objectType) {
   localStorage.setItem("object-count", objectCount);
 
   positionOnTop(objectProperties.code);
-  displayObjectProperties(objectProperties.code);
+  // displayObjectProperties(objectProperties.code);
 
 }
 
@@ -581,6 +581,9 @@ function displayObjectProperties(id) {
             })
       );
 
+  $("#" + objectProperties.code + " .view-object-properties span").attr("class", "fa fa-arrows-alt")
+  $("#" + objectProperties.code + ".edit-object").removeClass("draggable")
+  $("#" + objectProperties.code + ".edit-object").addClass("show-object-scroll")
   $(".object-properties #heading-" + objectProperties.code + " .detail-nav").attr({ "open": ""})
   $(".object-properties #heading-" + objectProperties.code + " .detail-nav span").attr("class", "fa fa-caret-up")
 
@@ -674,6 +677,15 @@ function removeObject(objectId) {
   // $("#survey-properties-" + objectId).remove();
 }
 
+function hideObjectProperties(objectId) {
+  $(".object-properties #heading-" + objectId + " .detail-nav").removeAttr("open")
+  $(".object-properties #heading-" + objectId + " .detail-nav span").attr("class", "fa fa-caret-down")
+  $(".object-properties div.detail-object").empty()
+  $("#" + objectId + " .view-object-properties span").attr("class", "fa fa-pencil-square-o")
+  $("#" + objectId + ".edit-object").addClass("draggable")
+  $("#" + objectId + ".edit-object").removeClass("show-object-scroll")
+}
+
 function constructObject(objectSeq, objectProperties) {
   
   objectProperties["sequence"] = objectProperties.sequence || objectSeq;
@@ -694,10 +706,15 @@ function constructObject(objectSeq, objectProperties) {
         .append(
           $('<button/>')
             .addClass("btn btn-sm btn-white btn-no-radius view-object-properties")
-            .append('<span class="icon icon-settings"></span>')
+            .append('<span class="fa fa-pencil-square-o"></span>')
             .on("click", function() {
               var objectId = $(this).parent().attr('id');
-              displayObjectProperties(objectId)
+              if ($(".object-properties #heading-" + objectId + " .detail-nav").attr("open")) {
+                hideObjectProperties(objectId)
+              }
+              else {
+                displayObjectProperties(objectId)
+              }
             })
          )
         .append(
@@ -728,7 +745,12 @@ function constructObject(objectSeq, objectProperties) {
             })
             .on("click", function() {
               var objectId = $(this).parent().attr('object-code');
-              displayObjectProperties(objectId)
+              if ($(".object-properties #heading-" + objectId + " .detail-nav").attr("open")) {
+                hideObjectProperties(objectId)
+              }
+              else {
+                displayObjectProperties(objectId)
+              }
             })
             .text(objectProperties.name)
           )
@@ -741,10 +763,7 @@ function constructObject(objectSeq, objectProperties) {
               var objectId = $(this).parent().attr('object-code');
 
               if ($(".object-properties #heading-" + objectId + " .detail-nav").attr("open")) {
-                // hide properties
-                $(".object-properties #heading-" + objectId + " .detail-nav").removeAttr("open")
-                $(".object-properties #heading-" + objectId + " .detail-nav span").attr("class", "fa fa-caret-down")
-                $(".object-properties div.detail-object").empty()
+                hideObjectProperties(objectId)
               }
               else {
                 displayObjectProperties(objectId)

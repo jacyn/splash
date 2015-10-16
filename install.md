@@ -7,7 +7,7 @@ VM requirements
 CentOS
   python27 python27-pip python27-virtualenv
   mysql mysql-devel mysql-server 
-  zlib-devel libjpeg-turbo.x86_64 gcc
+  zlib-devel libjpeg-turbo.x86_64 gcc libjpeg-turbo-devel.x86_64 freetype.x86_64 freetype-devel.x86_64
   lighttpd
   git
 
