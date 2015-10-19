@@ -30,7 +30,10 @@ class SurveyReport(object):
 
                     line = [ answer.pk, answer.date_created, ]
                     for code in survey_questions.keys():
-                        line.append(survey_answers.get(code, None))
+                        value = survey_answers.get(code, None)
+                        if isinstance(value, list):
+                            value = ", ".join(value)
+                        line.append(value)
 
                     data.append(line)
 

@@ -56,7 +56,7 @@
       <tr>
         <th>Account type</th>
         <td>
-          {% if user_detail.is_staff %}
+          {% if user_detail.user_profile.is_admin %}
             <span class="label label-primary">Administrator</span>
           {% else %}
             <span class="label label-default">Normal</span>

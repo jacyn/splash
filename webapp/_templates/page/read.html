@@ -12,7 +12,7 @@
     {% endif %}
   
   <p class="pull-right">
-    {% if user.is_superuser or user.is_staff %}<a href="{% url "app:edit_page" page_detail.pk %}" class="btn btn-info btn-sm"> <i class="icon-pencil"></i> <span> Edit Page Details</span> </a>{% endif %}
+    {% if not user.user_profile.is_normal %}<a href="{% url "app:edit_page" page_detail.pk %}" class="btn btn-info btn-sm"> <i class="icon-pencil"></i> <span> Edit Page Details</span> </a>{% endif %}
     <a href="{% url "app:layout_main" page_detail.pk %}" class="btn btn-primary btn-sm"> <i class="icon-pencil"></i> <span> Customize Page Layout</span> </a>
     {% if page_detail.live_mode %}
       <a href="{% url "app:switch_page" page_detail.pk 0 %}" class="btn btn-sm btn-danger"><i class="icon-ban"></i> Switch to Test Mode</a>

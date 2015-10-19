@@ -12,19 +12,20 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 from userman import forms as userman_forms
-
+from userman import models as userman_models
 
 
 @login_required
 def main(request, template_name="userman/main.html"):
     context = RequestContext(request)
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal(): 
+            raise Http404()
 
     users = User.objects.filter(is_superuser=False)
-    if not request.user.is_superuser and request.user.is_staff:
-        users = users.exclude(is_staff=True)
+    #if request.user.user_profile.is_admin(): 
+    #    users = users.exclude(user_profile__user_type=userman_models.USER_TYPE.ADMIN)
 
     http_response = render_to_response(
         template_name, 
@@ -44,8 +45,9 @@ def redirect_to_main(request):
 def read(request, user_id=None, template_name="userman/read.html"):
     context = RequestContext(request)
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal(): 
+            raise Http404()
 
     user_detail = User.objects.get(pk=user_id)
 
@@ -76,18 +78,38 @@ def edit(request, user_id=None):
 def submit(request, user=None, template_name="userman/form.html"):
     context = RequestContext(request)
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal():
+            raise Http404()
 
-    form = userman_forms.UserForm(user=user)
+    initial={ }
+    if user:
+        initial.update({
+            "username": user.username,
+            "user_type": user.user_profile.user_type,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+        })
+
+    form = userman_forms.UserForm(initial=initial)
     if request.POST:
         form = userman_forms.UserForm(data=request.POST, instance=user)
         if form.is_valid():
             if user:
+                form.update_model_instance(user)
                 user.save()
+
+                user_profile = user.user_profile
+                user_profile.user_type = form.cleaned_data.get("user_type")
+                user_profile.save()
                 messages.success(request, 'Updated user account "%s"' % user.username)
             else:
-                user = User.objects.create_user(**form.cleaned_data)
+                user = form.get_new_model()
+                user.save()
+
+                user_profile = userman_models.UserProfile(user=user, user_type=form.cleaned_data.get("user_type"))
+                user_profile.save()
                 messages.success(request, 'Added new user account "%s"' % user.username)
 
             if user:
@@ -108,8 +130,9 @@ def submit(request, user=None, template_name="userman/form.html"):
 def activate(request, user_id=None):
     context = RequestContext(request)
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal():
+            raise Http404()
 
     user = User.objects.get(pk=user_id)
     user.is_active = True
@@ -124,8 +147,9 @@ def activate(request, user_id=None):
 def deactivate(request, user_id=None):
     context = RequestContext(request)
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal():
+            raise Http404()
 
     user = User.objects.get(pk=user_id)
     user.is_active = False
@@ -140,8 +164,9 @@ def deactivate(request, user_id=None):
 def check_username(request):
     username = request.GET.get('username')
 
-    if not request.user.is_staff:
-        raise Http404()
+    if not request.user.is_superuser:
+        if request.user.user_profile.is_normal(): 
+            raise Http404()
 
     if not request.is_ajax():
         messages.error(request, 'This action requires javascript (ajax).')

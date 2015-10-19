@@ -22,10 +22,28 @@ from app import models as app_models
 import app.views.survey as app_survey_views
 from app.logger import AppLogger
 
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
+
+from importlib import import_module
+
 
 @login_required
 def main(request, page_id=None, template_name="layout/main.html"):
     context = RequestContext(request)
+
+    session_key = "edit-layout-%s" % page_id
+    try:
+        s = Session.objects.get(pk=session_key)
+        print >> sys.stderr, "%s = %s" % (s.expire_date, s.get_decoded())
+    except Session.DoesNotExist, dne:
+        s = SessionStore(session_key=session_key)
+        s.set_expiry(30) # 1 hour = 3600
+        s.save()
+
+        print >> sys.stderr, "does not exist %s" % s.session_key
+    except Exception, e:
+        print >> sys.stderr, "%s" % e
 
     page = None
     if page_id:

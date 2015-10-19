@@ -2,7 +2,7 @@ import sys
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User, UserManager
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from filer.fields.image import FilerImageField

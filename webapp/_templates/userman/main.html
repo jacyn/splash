@@ -34,7 +34,7 @@
             <tr>
               <td><a href="{% url "userman:read" usr.pk %}">{{ usr.username }}</a></td>
               <td>
-                {% if usr.is_staff %}
+                {% if usr.user_profile.is_admin %}
                   <span class="label label-primary">Administrator</span>
                 {% else %}
                   <span class="label label-default">Normal</span>

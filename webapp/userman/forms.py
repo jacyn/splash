@@ -1,3 +1,5 @@
+import sys 
+
 from django import forms
 from django.contrib.auth.models import User
 
@@ -5,12 +7,15 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Fieldset, ButtonHolder, Submit, Div, Button, HTML, Hidden
 from crispy_forms.bootstrap import FormActions
 
+from userman import models as userman_models
 
-import sys 
+
 class UserForm(forms.ModelForm):
     class Meta:
         model     = User
         fields    = ( 'username', 'first_name', 'last_name', 'email' )
+
+    user_type = forms.ChoiceField(widget=forms.Select(), choices=userman_models.USER_TYPE.CHOICES, initial=userman_models.USER_TYPE.NORMAL)
 
     helper = FormHelper()
     helper.form_tag = True
@@ -21,6 +26,7 @@ class UserForm(forms.ModelForm):
 
     helper.layout = Layout(
         Field('username', css_class='form-control'),
+        Field('user_type', css_class='form-control'),
         Field('first_name', css_class='form-control'),
         Field('last_name', css_class='form-control'),
         Field('email', css_class='form-control'),
@@ -40,7 +46,23 @@ class UserForm(forms.ModelForm):
     
         if user:
             for fname in UserForm().fields.keys():
-                initial[fname] = getattr(user, fname)
+	        initial[fname] = getattr(user, fname)
 
         super(UserForm, self).__init__(initial=initial, *args, **kwargs)
+
+
+    def get_new_model(self, **kwargs):
+        d = self.cleaned_data
+        defaults = dict(d)
+        defaults.update({
+            "is_staff": True,
+        })
+
+        del defaults["user_type"]
+        return User(**defaults)
+
+    def update_model_instance(self, model):
+        for fname in self.cleaned_data.keys():
+            setattr(model, fname, self.cleaned_data.get(fname))
+
 

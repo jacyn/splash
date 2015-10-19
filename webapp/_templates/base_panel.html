@@ -44,7 +44,7 @@
                           <span>Pages</span>
                       </a>
                   </li>
-                  {% if user.is_staff %}
+                  {% if not user.user_profile.is_normal %}
                   <li class="sub-menu dcjq-parent-li">
                       <a id="sidebar-menu-item-users" href="{% url 'userman:main' %}" title="User Accounts">
                           <i class="icon-users"></i>
